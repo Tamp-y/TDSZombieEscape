@@ -1,0 +1,7 @@
+"zombieescape"
+{
+	"base"		"tds"
+	"title"		"Zombie Escape"
+	"category"	"other"
+	"menusystem"	"0"
+}
