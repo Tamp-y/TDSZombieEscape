@@ -15,7 +15,6 @@ hook.Add( "PlayerSpawn", "tds_ZombieEscapeTeam", function( ply )
         ply:SetModel( "models/player/urban.mdl" )
         ply:Give( "weapon_m4a1" )
         ply:Give( "weapon_knife" )
-        ply:GiveAmmo( 9999, "ar2", false )
     else
         ply:BecomeZombie()
     end

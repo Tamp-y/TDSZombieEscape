@@ -15,10 +15,11 @@ SWEP.Stats = {}
 STAT = SWEP.Stats
 STAT.Damage = 20
 STAT.Bullets = 1
+STAT.Ammo = "5.56"
 STAT.Automatic = true
 STAT.Clip = 30
 STAT.Firerate = 60/750
-STAT.ReloadTime = 2.8
+STAT.ReloadTime = 3.1
 
 -- Sounds
 

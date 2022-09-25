@@ -4,6 +4,14 @@ SWEP.Spawnable = false
 SWEP.UseHands = true
 SWEP.DrawCrosshair = false
 
+hook.Add( "Initialize", "tds_basewep_ammotypes", function()
+    game.AddAmmoType( {
+        name = "5.56x45mm",
+        dmgtype = DMG_BULLET,
+        tracer = TRACER_LINE,
+    } )
+end)
+
 -- ██╗   ██╗ █████╗ ██╗     ██╗   ██╗███████╗███████╗
 -- ██║   ██║██╔══██╗██║     ██║   ██║██╔════╝██╔════╝
 -- ██║   ██║███████║██║     ██║   ██║█████╗  ███████╗
@@ -46,6 +54,14 @@ end
 -- ╚██████╗██║  ██║███████╗╚██████╗██║  ██╗███████║
 --  ╚═════╝╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝  ╚═╝╚══════╝
 
+function SWEP:IsGun()
+    if self.WeaponType != "melee" then return true end
+end
+
+function SWEP:IsSuppressed()
+    return false
+end
+
 -- Gun Specific
 
 function SWEP:CanShoot()
@@ -55,9 +71,10 @@ function SWEP:CanShoot()
 end
 
 function SWEP:CanReload()
+    if self.WeaponType == "melee" then return false end
     if CurTime() < self:GetNextReload() then return false end
-    if self:Clip1() >= self.Primary.ClipSize then return false end --No reason to reload with a full magainze
-    if self:Ammo1() == 0 then return false end --Cannot reload with no spare ammo
+    --if self:Clip1() >= self.Primary.ClipSize then return false end --No reason to reload with a full magainze
+    --if self:Ammo1() == 0 then return false end --Cannot reload with no spare ammo
     return true
 end
 
@@ -75,25 +92,27 @@ end
 -- Gun Specific
 
 function SWEP:Shoot()
+    local ply = self.Owner and self.Owner or self:GetOwner()
     local bullet = {}
-    bullet.Attacker = self.Owner
-    bullet.Src = self.Owner:GetShootPos()
-    bullet.Dir = self.Owner:GetAimVector()
-    bullet.Damage = self.Primary.Damage
-    bullet.Num = self.Primary.Bullets
-    bullet.Spread = Vector( self:GetSpread(), self:GetSpread(), 0 )
-    bullet.Tracer = 1
-    bullet.Distance = 10000
-    self.Owner:FireBullets( bullet )
+    bullet.Attacker = ply
+    bullet.Src = ply:GetShootPos()
+    bullet.Dir = ply:GetAimVector()
+    bullet.Damage = self:GetDamage()
+    bullet.Num = self:GetBullets()
+    bullet.Spread = Vector( 0, 0, 0 ) --First and second value for spread, ignore third
+    ply:FireBullets( bullet )
 
-    local snd = istable( self.Primary.Sound ) and table.Random( self.Primary.Sound ) or self.Primary.Sound
+    local snd = self:RandomValue( self.Sounds.Shoot )
+    if self:IsSuppressed() then
+        snd = self:RandomValue( self.Sounds.ShootSilencer )
+    end
     self:EmitSound( snd )
-    self.Owner:SetAnimation( PLAYER_ATTACK1 )
+    ply:SetAnimation( PLAYER_ATTACK1 )
     if SERVER then 
-        self:PlaySequence( self.Anim.Attack ) 
+        self:PlaySequence( self:RandomValue( self.Anims.Shoot ) ) 
     end
 
-    self:SetNextPrimaryFire( CurTime() + self.Primary.Firerate )
+    self:SetNextPrimaryFire( CurTime() + self:GetFirerate() )
     self:SetClip1( self:Clip1() - 1 )
 end
 
@@ -152,18 +171,24 @@ end
 -- ██║  ██║╚██████╗   ██║   ██║╚██████╔╝██║ ╚████║    ╚██████╗██║  ██║███████╗███████╗███████║
 -- ╚═╝  ╚═╝ ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝     ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝
 
---[[
 function SWEP:Initialize()
-    self:SetHoldType( self.HoldType )
+    self:SetClip1( self:GetMagSize() )
 end
-]]
 
 function SWEP:Deploy()
-    self:PlaySequence( self.Anims.Draw )
+    self:PlaySequence( self:RandomValue( self.Anims.Draw ) )
 end
 
 function SWEP:PrimaryAttack()
-    
+    if self:IsGun() then
+        if self:CanShoot() then 
+            self:Shoot()
+        else
+            if self:Clip1() <= 0 then
+                self:Reload()
+            end
+        end
+    end
 end
 
 function SWEP:SecondaryAttack()
@@ -171,7 +196,11 @@ function SWEP:SecondaryAttack()
 end
 
 function SWEP:Reload()
-    
+    if not self:CanReload() then return end
+
+    self:SetNextReload( CurTime() + self:GetReloadTime() )
+    self:PlaySequence( self:RandomValue( self.Anims.Reload ) )
+    self.Owner:SetAnimation( PLAYER_RELOAD )
 end
 
 -- ███████╗███████╗ ██████╗ ██╗   ██╗███████╗███╗   ██╗ ██████╗██╗███╗   ██╗ ██████╗
@@ -195,44 +224,71 @@ end
 -- ██║ ╚═╝ ██║██║███████║╚██████╗
 -- ╚═╝     ╚═╝╚═╝╚══════╝ ╚═════╝
 
+function SWEP:RandomValue( var )
+    local value = var
+
+    if istable( var ) then
+        value = table.Random( var )
+    end
+
+    return value
+end
+
+function SWEP:GetDamage()
+    return self.Stats.Damage
+end
+
+function SWEP:GetBullets()
+    return self.Stats.Bullets
+end
+
+function SWEP:GetFirerate()
+    return self.Stats.Firerate
+end
+
+function SWEP:IsAutomatic()
+    return true
+end
+
+function SWEP:GetMagSize()
+    return self.Stats.Clip
+end
+
+function SWEP:GetReloadTime()
+    return self.Stats.ReloadTime
+end
+
+function SWEP:GetAmmoType()
+    return game.GetAmmoID( self.Stats.Ammo )
+end
+
+function SWEP:GetAmmoTypeName()
+    return game.GetAmmoName( self:GetAmmoType() )
+end
+
+function SWEP:IsReloading()
+    reload = self:GetNextReload() <= 0 and 
+end
+
 function SWEP:Think()
     self:SetWeaponHoldType( self.HoldType )
-
-    --[[
-    --Reloading
-    if CurTime() > self:GetNextReload() and self:GetNextReload() != 0 then
-        if not self.ReloadOneByOne then
-            self:SetNextReload( 0 )
-            local ammoMissing = self.Primary.ClipSize - self:Clip1()
-            if self:Ammo1() >= ammoMissing then
-                self.Owner:SetAmmo( self:Ammo1() - ammoMissing, self:GetPrimaryAmmoType() )
-                self:SetClip1( self:Clip1() + ammoMissing )
-            elseif self:Ammo1() < ammoMissing then
-                self:SetClip1( self:Clip1() + self:Ammo1() )
-                self.Owner:SetAmmo( 0, self:GetPrimaryAmmoType() )
-            end
-        else
-            if self:Clip1() >= self.Primary.ClipSize or self:Ammo1() <= 0 or not self.Owner:KeyDown( IN_RELOAD ) then
-                self:PlaySequence( self.Anim.Reload[3] )
-                self:SetNextReload( 0 )
-            else
-                self:PlaySequence( self.Anim.Reload[2] )
-                self:SetClip1( self:Clip1() + 1 )
-                self.Owner:SetAmmo( self:Ammo1() - 1, self:GetPrimaryAmmoType())
-                self:SetNextReload( CurTime() + self.Primary.InsertReloadTime )
-                if self.Primary.Reload then
-                    self:EmitSound( self.Primary.Reload )
-                end
-            end
-        end
+    if self:IsAutomatic() then
+        self.Primary.Automatic = true
+    else
+        self.Primary.Automatic = false
     end
-    ]]
+
+    --Reloading
+    if self:IsReloading() and CurTime() > self:GetNextReload() then
+        self:SetNextReload( 0 )
+        self:SetClip1( self:GetMagSize() )
+    end
 end
 
 function SWEP:DrawHUD()
     local length, thick, shadowthick, space, opacity = 4, 1, 1, 5, 200
     
-    --Shadow
+    --Crosshair Shadow
     surface.SetDrawColor( Color( 0, 0, 0, opacity ))
     surface.DrawRect( ScrW() / 2 - (thick / 2) - shadowthick, ScrH() / 2 - (thick / 2) - shadowthick, thick + (shadowthick * 2), thick + (shadowthick * 2) ) --Dot
     surface.DrawRect( ScrW() / 2 - (thick / 2) - (length + space) - shadowthick, ScrH() / 2 - (thick / 2) - shadowthick, length + (shadowthick * 2), thick + (shadowthick * 2) ) --Left Line
@@ -240,7 +296,7 @@ function SWEP:DrawHUD()
     surface.DrawRect( ScrW() / 2 - (thick / 2) - shadowthick, ScrH() / 2 - (thick / 2) - (length + space) - shadowthick, thick + (shadowthick * 2), length + (shadowthick * 2) ) --Top Line
     surface.DrawRect( ScrW() / 2 - (thick / 2) - shadowthick, ScrH() / 2 + (thick / 2) + space - shadowthick, thick + (shadowthick * 2), length + (shadowthick * 2) ) --Bottom Line
 
-    --Front
+    --Crosshair Front
     local col = HUDCOL_PRIMARY:ToTable()
     surface.SetDrawColor( col[1], col[2], col[3], opacity )
     surface.DrawRect( ScrW() / 2 - (thick / 2), ScrH() / 2 - (thick / 2), thick, thick ) --Dot
@@ -248,4 +304,13 @@ function SWEP:DrawHUD()
     surface.DrawRect( ScrW() / 2 + (thick / 2) + space, ScrH() / 2 - (thick / 2), length, thick ) --Right Line
     surface.DrawRect( ScrW() / 2 - (thick / 2), ScrH() / 2 - (thick / 2) - (length + space), thick, length ) --Top Line
     surface.DrawRect( ScrW() / 2 - (thick / 2), ScrH() / 2 + (thick / 2) + space, thick, length ) --Bottom Line
+
+    --Ammo
+    local width, height, xoff, yoff = 250, 70, 50, 50
+    local boxx, boxy = ScrW() - (width + xoff), ScrH() - (height + yoff)
+    surface.SetDrawColor( HUDCOL_SECONDARY )
+    surface.DrawRect( boxx, boxy, width, height )
+    draw.SimpleText( "Ammo", "TDSHudNormal", boxx + 5, boxy + 5, HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP )
+    draw.SimpleText( self:Clip1() .. " / " .. self:GetMagSize(), "TDSHudNormal", boxx + 5, boxy + 60, HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM )
+    draw.SimpleText( self:GetAmmoTypeName(), "TDSHudNormal", boxx + 235, boxy + 60, HUDCOL_PRIMARY, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM )
 end
