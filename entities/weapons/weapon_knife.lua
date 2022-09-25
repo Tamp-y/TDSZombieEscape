@@ -1,8 +1,10 @@
+local _ = nil
+--[[
 SWEP.PrintName = "Knife"
 SWEP.Category = "Aftershock"
 SWEP.Spawnable = true
 SWEP.Base = "as_basewep"
-SWEP.Slot = 1
+SWEP.Slot = 2
 
 SWEP.Melee = true
 SWEP.HoldType = "knife"
@@ -35,3 +37,4 @@ Stat.ImpactFlesh = {"weapons/knife/knife_hit1.wav", "weapons/knife/knife_hit2.wa
 
 SWEP.Primary.DefaultClip = 0
 SWEP.Secondary.DefaultClip = 0
+]]
