@@ -22,7 +22,7 @@ if not INITIALLOADFINISHED then
 end
 
 function Developing()
-    if SET["Developer"] then return true else return false end
+    if tobool( SET["Developer"] ) then return true else return false end
 end
 
 if SERVER then
