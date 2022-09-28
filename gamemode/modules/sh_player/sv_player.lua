@@ -20,6 +20,22 @@ function PlyMeta:BecomeZombie()
     self:EmitSound("npc/fast_zombie/fz_scream1.wav", 80, 100, 0.5)
 end
 
+function PlyMeta:HasPrimaryWeapon()
+    for k, v in pairs( self:GetWeapons() ) do
+        if v.WeaponType == "primary" then return true end
+    end
+
+    return false
+end
+
+function PlyMeta:HasSecondaryWeapon()
+    for k, v in pairs( self:GetWeapons() ) do
+        if v.WeaponType == "secondary" then return true end
+    end
+
+    return false
+end
+
 hook.Add( "PlayerSpawn", "tds_ZombieEscapeTeam", function( ply )
     if GAMEMODE:InPreSelection() or GAMEMODE:InWarmup() or Developing() then
         ply:BecomeHuman()
@@ -40,12 +56,20 @@ hook.Add( "PlayerShouldTakeDamage", "tds_ZombieEscapeNoTK", function( ply, atk )
     end
 end )
 
-hook.Add( "EntityTakeDamage", "tds_ZombieEscapeDamageMult", function( target, dmg )
-    local dmgTrigger = {
-        ["func_breakable"] = true
-    }
+-- ███╗   ██╗███████╗████████╗██╗    ██╗ ██████╗ ██████╗ ██╗  ██╗██╗███╗   ██╗ ██████╗
+-- ████╗  ██║██╔════╝╚══██╔══╝██║    ██║██╔═══██╗██╔══██╗██║ ██╔╝██║████╗  ██║██╔════╝
+-- ██╔██╗ ██║█████╗     ██║   ██║ █╗ ██║██║   ██║██████╔╝█████╔╝ ██║██╔██╗ ██║██║  ███╗
+-- ██║╚██╗██║██╔══╝     ██║   ██║███╗██║██║   ██║██╔══██╗██╔═██╗ ██║██║╚██╗██║██║   ██║
+-- ██║ ╚████║███████╗   ██║   ╚███╔███╔╝╚██████╔╝██║  ██║██║  ██╗██║██║ ╚████║╚██████╔╝
+-- ╚═╝  ╚═══╝╚══════╝   ╚═╝    ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝
 
-    if dmgTrigger[target:GetClass()] then
-        dmg:SetDamage( dmg:GetDamage() * SET["TriggerDamageMult"] )
+util.AddNetworkString( "tds_dropweapon" )
+
+net.Receive( "tds_dropweapon", function( _, ply )
+    local wep = ply:GetActiveWeapon()
+    if not wep.Base == "tds_basewep" then return end
+
+    if wep.WeaponType == "primary" or wep.WeaponType == "secondary" then
+        ply:DropWeapon( wep )
     end
-end )
+end)

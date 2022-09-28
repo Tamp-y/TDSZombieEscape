@@ -91,6 +91,16 @@ function SWEP:CanReload()
     return true
 end
 
+function SWEP:IsPrimaryWeapon()
+    if self.WeaponType == "primary" then return true end
+    return false
+end
+
+function SWEP:IsSecondaryWeapon()
+    if self.WeaponType == "secondary" then return true end
+    return false
+end
+
 -- Melee Specific
 
 function SWEP:IsMelee()

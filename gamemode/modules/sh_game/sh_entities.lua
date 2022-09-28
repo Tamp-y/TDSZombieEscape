@@ -27,4 +27,27 @@ if SERVER then
         FixBotTriggers()
         FixPhysbox()
     end)
+
+    hook.Add( "AllowPlayerPickup", "tds_fixEpickup", function( ply, ent ) 
+        return false
+    end)
+
+    hook.Add( "PlayerCanPickupWeapon", "tds_antiweaponstack", function( ply, wep ) 
+        if not wep.Base == "tds_basewep" then return false end --ignore weapons not apart of weapon base
+
+        if wep:IsPrimaryWeapon() and ply:HasPrimaryWeapon() then return false end
+        if wep:IsSecondaryWeapon() and ply:HasSecondaryWeapon() then return false end
+        return true
+    end)
+
+    hook.Add( "EntityTakeDamage", "tds_ZombieEscapeDamageMult", function( target, dmg )
+        local dmgTrigger = {
+            ["func_breakable"] = true
+        }
+    
+        if dmgTrigger[target:GetClass()] then
+            dmg:SetDamage( dmg:GetDamage() * SET["TriggerDamageMult"] )
+        end
+    end )
+
 end
