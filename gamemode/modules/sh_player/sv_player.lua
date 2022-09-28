@@ -42,6 +42,8 @@ hook.Add( "PlayerSpawn", "tds_ZombieEscapeTeam", function( ply )
     else
         ply:BecomeZombie()
     end
+
+    ply:AllowFlashlight( true )
 end)
 
 hook.Add( "PlayerDeath", "tds_ZombieEscapeDeath", function( ply ) 
