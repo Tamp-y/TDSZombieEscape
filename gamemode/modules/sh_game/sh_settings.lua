@@ -25,7 +25,7 @@ SET["TriggerDamageMult"] = 2
 --Teams
 SET["HWeapons"] = { --Default weapons to spawn with (TDSFramework will override this)
     "weapon_m4a1",
-    --"weapon_usp",
+    "weapon_usp",
     "weapon_knife",
     --"weapon_he",
 }

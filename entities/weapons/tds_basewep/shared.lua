@@ -143,6 +143,18 @@ function SWEP:ReloadGun()
     self.Owner:SetAnimation( PLAYER_RELOAD )
 end
 
+function SWEP:ToggleSilencer()
+    if self:IsReloading() then return end
+
+    if not self:GetSilenced() then
+        self:SetSilenced( true )
+        self:PlaySequence( self.Anims.Silencer["Attach"] )
+    else
+        self:SetSilenced( false )
+        self:PlaySequence( self.Anims.Silencer["Detach"] )
+    end
+end
+
 -- Melee Specific
 
 function SWEP:SwingMelee()
@@ -187,9 +199,15 @@ function SWEP:MeleeImpact( alt )
     local ent = tr.Entity
     if tr.Hit then
         local snd = self:RandomValue( self.Sounds.AttackWall )
-        if ent and IsValid( ent ) and (ent:IsPlayer() or ent:IsNPC() or ent:IsBot()) then
-            if SERVER then
+        if ent and IsValid( ent ) then
+            if ent:IsPlayer() or ent:IsNPC() then
                 snd = self:RandomValue( self.Sounds.Attack )
+
+                local ef = EffectData()
+                ef:SetOrigin( tr.HitPos )
+                util.Effect( "BloodImpact", ef )
+            end
+            if SERVER then
                 ent:EmitSound( snd )
 
                 local dam = alt and self:GetAltDamage() or self:GetDamage()
@@ -200,9 +218,6 @@ function SWEP:MeleeImpact( alt )
                 dmginfo:SetDamage( dam )
                 ent:TakeDamageInfo( dmginfo )
             end
-            local ef = EffectData()
-            ef:SetOrigin( tr.HitPos )
-            util.Effect( "BloodImpact", ef )
         else
             if SERVER then
                 ply:EmitSound( snd )

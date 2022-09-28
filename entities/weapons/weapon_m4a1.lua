@@ -1,6 +1,6 @@
 -- Base Information
 
-SWEP.PrintName = "M4A1"
+SWEP.PrintName = "M4A1-S"
 SWEP.Base = "tds_basewep"
 SWEP.ViewModel = "models/weapons/cstrike/c_rif_m4a1.mdl"
 SWEP.ViewModelFOV = 55
@@ -14,10 +14,10 @@ SWEP.HoldType = "ar2"
 
 SWEP.Stats = {}
 STAT = SWEP.Stats
-STAT.Damage = 20
-STAT.DamageSilencer = 17
+STAT.Damage = 24
+STAT.DamageSilencer = 22
 STAT.Spread = 0.015
-STAT.SpreadSilencer = 0.0085
+STAT.SpreadSilencer = 0.01
 STAT.Bullets = 1
 STAT.Ammo = "5.56x45mm"
 STAT.SpeedReduction = 35
@@ -61,15 +61,7 @@ ANM.Silencer = {
 -- Custom
 
 function SWEP:SecondaryAttack()
-    if self:IsReloading() then return end
-
-    if not self:GetSilenced() then
-        self:SetSilenced( true )
-        self:PlaySequence( self.Anims.Silencer["Attach"] )
-    else
-        self:SetSilenced( false )
-        self:PlaySequence( self.Anims.Silencer["Detach"] )
-    end
+    self:ToggleSilencer()
 
     self:SetNextPrimaryFire( CurTime() + 1.8 )
     self:SetNextSecondaryFire( CurTime() + 1.8 )

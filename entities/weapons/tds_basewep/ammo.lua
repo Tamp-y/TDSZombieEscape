@@ -4,4 +4,10 @@ hook.Add( "Initialize", "tds_basewep_ammotypes", function()
         dmgtype = DMG_BULLET,
         tracer = TRACER_LINE,
     } )
+
+    game.AddAmmoType( {
+        name = "9x19mm",
+        dmgtype = DMG_BULLET,
+        tracer = TRACER_LINE,
+    } )
 end)

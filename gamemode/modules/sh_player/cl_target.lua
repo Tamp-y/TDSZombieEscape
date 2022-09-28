@@ -23,16 +23,19 @@ function GetTargetLength()
 end
 
 hook.Add("Think", "TDS_ZombieEscapeTarget", function()
+    local validEnts = {
+        ["func_breakable"] = true,
+    }
     local ply = LocalPlayer()
     local wep = ply:GetActiveWeapon()
     local trace = util.TraceLine({
         start = ply:GetShootPos(),
         endpos = ply:GetShootPos() + (ply:GetAimVector() * 10000),
         filter = ply,
-        mask = MASK_SHOT
+        mask = MASK_SOLID
     })
     local ent = trace.Entity
-    if IsValid(ent) and ent:Health() > 0 then
+    if IsValid(ent) and validEnts[ent:GetClass()] and ent:Health() > 0 then
         SetActiveTarget( ent )
         SetTargetLength( CurTime() + 1 )
     end
