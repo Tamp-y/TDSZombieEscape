@@ -34,7 +34,7 @@ hook.Add("Think", "TDS_ZombieEscapeTarget", function()
     local ent = trace.Entity
     if IsValid(ent) and ent:Health() > 0 then
         SetActiveTarget( ent )
-        SetTargetLength( CurTime() + 5 )
+        SetTargetLength( CurTime() + 1 )
     end
 
     if HasActiveTarget() and CurTime() > GetTargetLength() or not IsValid( GetActiveTarget() ) then

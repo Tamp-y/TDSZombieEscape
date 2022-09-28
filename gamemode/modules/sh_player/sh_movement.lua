@@ -3,11 +3,11 @@ function GM:PlayerNoClip( ply, state )
 end
 
 hook.Add( "SetupMove", "tds_ZombieEscapeMovement", function( ply, mv, cmd )
-    if SERVER then
-        ply:SprintDisable()
-    end
+    local movespeed = SET["MovementSpeed"]
+    movespeed = ply:GetActiveWeapon().Base == "tds_basewep" and movespeed - (ply:GetActiveWeapon().Stats.SpeedReduction or 0) or movespeed
     ply:SetJumpPower( SET["JumpHeight"] )
-    ply:SetWalkSpeed( SET["MovementSpeed"] )
+    ply:SetRunSpeed( movespeed )
+    ply:SetWalkSpeed( movespeed )
     ply:SetViewOffset( Vector( 0, 0, 58 ) )
     ply:SetViewOffsetDucked( Vector( 0, 0, 40 ) )
     ply:SetHull( Vector( -16, -16, 0 ), Vector( 16, 16, 63 ) )

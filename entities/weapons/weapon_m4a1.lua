@@ -5,8 +5,9 @@ SWEP.Base = "tds_basewep"
 SWEP.ViewModel = "models/weapons/cstrike/c_rif_m4a1.mdl"
 SWEP.ViewModelFOV = 55
 SWEP.WorldModel = "models/weapons/w_rif_m4a1.mdl"
+SWEP.Slot = 0
 
-SWEP.WeaponType = "rifle"
+SWEP.WeaponType = "primary"
 SWEP.HoldType = "ar2"
 
 -- Statistics
@@ -14,12 +15,16 @@ SWEP.HoldType = "ar2"
 SWEP.Stats = {}
 STAT = SWEP.Stats
 STAT.Damage = 20
+STAT.DamageSilencer = 17
+STAT.Spread = 0.015
+STAT.SpreadSilencer = 0.0085
 STAT.Bullets = 1
-STAT.Ammo = "5.56"
+STAT.Ammo = "5.56x45mm"
+STAT.SpeedReduction = 35
 STAT.Automatic = true
 STAT.Clip = 30
 STAT.Firerate = 60/750
-STAT.ReloadTime = 3.1
+STAT.ReloadTime = 2.8
 
 -- Sounds
 
@@ -53,39 +58,19 @@ ANM.Silencer = {
     Reload = "reload",
 }
 
---[[
-SWEP.Anims = {
-    Idle = "idle_unsil",
-    Deploy = "draw_unsil",
-    Attack = {
-        "shoot1_unsil",
-        "shoot2_unsil",
-        "shoot3_unsil"
-    },
-    Reload = "reload_unsil",
-    Silencer = {
-        Idle = "idle",
-        Deploy = "draw",
-        Attack = {
-            "shoot1"
-        }
-    },
-}
+-- Custom
 
-Stat = SWEP.Primary
-Stat.Damage = 20 --Damage
-Stat.Bullets = 1 --Bullets to fire
-Stat.Automatic = true
-Stat.Ammo = "ar2" --Ammo Type
-Stat.ClipSize = 30 --Mag size
-Stat.Firerate = 60/750 --Attack Rate
-Stat.Spread = 0.015 --Spread Cone
-Stat.SpreadC = 0.01 --Spread Cone while crouching
-Stat.RecoilVertical = 0.7 --vertical recoil
-Stat.RecoilHorizontal = 0.3 --Horizontal recoil
-Stat.Sound = "weapons/m4a1/m4a1_unsil-1.wav"
-Stat.ReloadTime = 2.8
+function SWEP:SecondaryAttack()
+    if self:IsReloading() then return end
 
-SWEP.Primary.DefaultClip = 50
-SWEP.Secondary.DefaultClip = 0
-]]
+    if not self:GetSilenced() then
+        self:SetSilenced( true )
+        self:PlaySequence( self.Anims.Silencer["Attach"] )
+    else
+        self:SetSilenced( false )
+        self:PlaySequence( self.Anims.Silencer["Detach"] )
+    end
+
+    self:SetNextPrimaryFire( CurTime() + 1.8 )
+    self:SetNextSecondaryFire( CurTime() + 1.8 )
+end

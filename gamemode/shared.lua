@@ -14,9 +14,13 @@ print( "Finished!" )
 
 if not INITIALLOADFINISHED then
     if TDSFRAMEWORK then
-        print( "TDSFramework detected, player info and framework features will be present.")
+        MsgC( Color( 100, 175, 50 ), "TDSFramework detected, player info and framework features will be present.\n")
     else
-        print( "TDSFramework is absent. The gamemode will still function with exclusion of any framework features." )
+        MsgC( Color( 205, 75, 15), "TDSFramework is absent. The gamemode will still function with exclusion of any framework features.\n" )
     end
     INITIALLOADFINISHED = true
+end
+
+function Developing()
+    if SET["Developer"] then return true else return false end
 end

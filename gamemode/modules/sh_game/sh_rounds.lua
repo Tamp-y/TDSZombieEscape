@@ -193,11 +193,14 @@ end
 if SERVER then
 
     hook.Add( "InitPostEntity", "tds_BeginGame", function() --Everything needed to begin the game goes here (after map has finished loading)
+        if Developing() then return end
         GAMEMODE:StartWarmup()
         GAMEMODE:SetMapTimer( SET["MapLength"] )
     end)
 
     hook.Add( "Think", "tds_TimerFunction", function()
+
+        if Developing() then return end
 
         local zAlive = 0
             for k, v in pairs( team.GetPlayers( 2 ) ) do
