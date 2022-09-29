@@ -44,8 +44,8 @@ function GM:HUDPaint()
         draw.SimpleTextOutlined( ply:Health(), "TDSHudSmall", x + width + 5, y + (height / 2), HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, 1, HUDCOL_SECONDARY )
     end
 
-    if IsValid( GetActiveTarget() ) then
-        local targethealth, targetmaxhealth = GetActiveTarget():Health(), GetActiveTarget():GetMaxHealth()
+    if HasActiveTarget() then
+        local targetname, targethealth, targetmaxhealth = GetActiveTarget(), GetActiveTargetHealth(), GetActiveTargetMaxHealth()
         local width, height, outline = 250, 15, 1
         local xpos, ypos = ScrW() / 2 - width / 2, ScrH() * 0.3
         local x, y = xpos, ypos
@@ -56,6 +56,7 @@ function GM:HUDPaint()
         surface.DrawOutlinedRect( x, y, width, height )
         surface.SetDrawColor( HUDCOL_PRIMARY )
         surface.DrawRect( x, y, math.Clamp( (targethealth / targetmaxhealth) * width, 0, width ), height )
+        draw.SimpleTextOutlined( targetname, "TDSHudSmall", x + (width / 2), y + (height / 2) - 20, HUDCOL_PRIMARY, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, HUDCOL_SECONDARY )
         draw.SimpleTextOutlined( targethealth, "TDSHudSmall", x + (width / 2), y + (height / 2), HUDCOL_PRIMARY, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, HUDCOL_SECONDARY )
     end
 

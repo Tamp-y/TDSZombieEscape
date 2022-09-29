@@ -1,133 +1,243 @@
-GM.Bosses = GM.Bosses or {}
-BossMeta = {}
+--[[
+    To quickly explain this somewhat confusing mess, bosses in ZE either use a breakable entity or a math counter to determine when they are dead.
+    In the case that they use a breakable, they only have a single health bar, so calculating the health will be easy. However, with math counters,
+    the boss is set to only intake a static amount of damage (ex; bahamut on mako only takes 5 damage per shot), so an entity will intake the damage
+    and tell the counter to decrease it's value.
+]]
 
-OBJ_MATH = 1
+OBJ_UNK = 0
+OBJ_COUNTER = 1
 OBJ_PHYSBOX = 2
 
-if ( SERVER ) then
-    util.AddNetworkString( "tdsze_boss_healthsync" )
-    util.AddNetworkString( "tdsze_boss_healthsyncrequest" )
-end
+local COUNTERS = {
+    ["math_counter"] = true,
+}
+local BREAKABLE = {
+    ["func_physbox_multiplayer"] = true,
+}
 
--- Object Features
+-- ███╗   ███╗███████╗████████╗██╗  ██╗ ██████╗ ██████╗ ███████╗
+-- ████╗ ████║██╔════╝╚══██╔══╝██║  ██║██╔═══██╗██╔══██╗██╔════╝
+-- ██╔████╔██║█████╗     ██║   ███████║██║   ██║██║  ██║███████╗
+-- ██║╚██╔╝██║██╔══╝     ██║   ██╔══██║██║   ██║██║  ██║╚════██║
+-- ██║ ╚═╝ ██║███████╗   ██║   ██║  ██║╚██████╔╝██████╔╝███████║
+-- ╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝
 
-function Boss:Create( name, refEnt, counter )
+BossMeta = {}
+
+function BossMeta:Create( name, ent, counter )
     local obj = {}
-    setmetatable( obj, BossMeta ) --This will apply the uniqueid table to use the 'BossMeta' features
- 
-    obj:SetName( name )
-    obj:SetEntity( refEnt )
-    obj:SetCounterEntity( counter )
-    
+    setmetatable( obj, BossMeta )
+    self.__index = self
+
+    obj.name = name --Display name for clients
+    obj.ent = ent --The entity that takes the damage
+    obj.counter = counter --The counter for the health
+
+    for k, v in pairs( ents.FindByName( obj.counter ) ) do
+        if COUNTERS[v:GetClass()] then
+            obj.type = OBJ_COUNTER
+        elseif BREAKABLE[v:GetClass()] then
+            obj.type = OBJ_PHYSBOX
+        end
+    end
+
     return obj
 end
 
-function Boss:SetName( str )
+-- Setting
+
+function BossMeta:SetName( str )
     self.name = str
 end
 
-function Boss:SetEntity( ent )
+function BossMeta:SetIntake( ent )
     self.ent = ent
 end
 
-function Boss:SetCounterEntity( ent )
+function BossMeta:SetCounter( ent )
     self.counter = ent
 end
 
-function Boss:SetHealth()
-    --I need to add something that will work with both counters and default health, unsure of how i want to do this.
+function BossMeta:SetType( int )
+    self.type = int
 end
 
-function Boss:SetMaxHealth( val )
-    self.MaxHealth = val
+function BossMeta:SetHealth( int )
+    self.health = int
 end
 
-function Boss:GetName() --Name to be displayed
-    return self.Name or "name?nil"
+function BossMeta:SetMaxHealth( int )
+    self.maxhealth = int
 end
 
-function Boss:GetEntity() --Entity our object references
-    return self.Ent
+-- Fetching
+
+function BossMeta:GetName()
+    return self.name or "name?nil"
 end
 
-function Boss:GetType() --Type of counter our object uses
-    return self.Type
+function BossMeta:GetIntake()
+    return self.ent
 end
 
-function Boss:GetCounter() --Counter of our entity reference
-    return self.Counter
+function BossMeta:GetCounter()
+    return self.counter
 end
 
-function Boss:GetActiveHealth()
-    if self:GetType() == OBJ_MATH then
-        return IsValid( self:GetCounter() ) and self:GetCounter():GetOutValue() or 1
+function BossMeta:GetType()
+    return self.type
+end
+
+function BossMeta:GetIntakeEntity()
+    for k, v in pairs( ents.FindByName( self:GetIntake() ) ) do
+        return v
+    end
+end
+
+function BossMeta:GetCounterEntity()
+    for k, v in pairs( ents.FindByName( self:GetCounter() ) ) do
+        return v
+    end
+end
+
+function BossMeta:GetHealth()
+    local health
+    if self:GetType() == OBJ_COUNTER then
+        print( self:GetCounterEntity() )
+        health = self:GetCounterEntity():GetOutValue()
     elseif self:GetType() == OBJ_PHYSBOX then
-        if not IsValid( self:GetCounter() ) then return 1 end
-        
-        local health = self:GetCounter():Health()
-        if not self:GetMaxHealth() or health >= self:GetMaxHealth() then --Will set the boss' max health in the case that it might be missing.
-            self:SetMaxHealth( health )
+        health = self:GetCounterEntity():Health()
+    end
+    return health or 1
+end
+
+function BossMeta:GetMaxHealth()
+    if not self.maxhealth then
+        self.maxhealth = self:GetHealth()
+    end
+    return self.maxhealth or 1
+end
+
+-- Actions
+
+function BossMeta:OnDamage( plydmg )
+    if IsValid( plydmg ) and plydmg:IsPlayer() then
+        self.Damage = self.Damage or {}
+        self.Damage[plydmg] = (self.Damage[plydmg] or 0) + 1
+    elseif IsValid( plydmg ) and plydmg:GetAttacker() then
+        self.Damage = self.Damage or {}
+        self.Damage[plydmg:GetAttacker()] = (self.Damage[plydmg:GetAttacker()] or 0) + plydmg:GetDamage()
+    end
+    self:Resync()
+end
+
+function BossMeta:OnKilled()
+    if self.Damage then
+        for k, v in pairs( player.GetAll() ) do
+            v:ChatPrint( "===== Boss Defeated =====" )
+            v:ChatPrint( "Highest Damagers:" )
+            local i = 1
+            for k2, v2 in SortedPairsByValue( self.Damage ) do
+                v:ChatPrint( k2:Nick() .. " - " .. v2 .. " HITs" )
+                if i >= 3 then break end
+                i = i + 1
+            end
         end
-        return health
     end
 end
 
-function Boss:GetHealthCounts()
+-- ███╗   ███╗ █████╗ ███╗   ██╗ █████╗  ██████╗ ███████╗███╗   ███╗███████╗███╗   ██╗████████╗
+-- ████╗ ████║██╔══██╗████╗  ██║██╔══██╗██╔════╝ ██╔════╝████╗ ████║██╔════╝████╗  ██║╚══██╔══╝
+-- ██╔████╔██║███████║██╔██╗ ██║███████║██║  ███╗█████╗  ██╔████╔██║█████╗  ██╔██╗ ██║   ██║
+-- ██║╚██╔╝██║██╔══██║██║╚██╗██║██╔══██║██║   ██║██╔══╝  ██║╚██╔╝██║██╔══╝  ██║╚██╗██║   ██║
+-- ██║ ╚═╝ ██║██║  ██║██║ ╚████║██║  ██║╚██████╔╝███████╗██║ ╚═╝ ██║███████╗██║ ╚████║   ██║
+-- ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝
 
-end
+ZE.Bosses = {}
 
-function Boss:GetMaxHealth()
-    return self.MaxHealth
-end
+function ZE:AddBoss( map, data )
+    if game.GetMap() != map then return end --doing this to keep the main table clean if we arent on the map.
 
-function Boss:GetMaxHealthCounts()
-
-end
-
-function Boss:HasCounter()
-    return self:GetCounter() and true or false
-end
-
-function Boss:OnKilled()
-
-end
-
-function Boss:OnDamaged()
-    self:ResyncHealth()
-end
-
-function Boss:ResyncHealth() --WIP
-    if ( SERVER ) then
-        net.Start( "tdsze_boss_healthsync" )
-            net.WriteEntity( self:GetEntity() )
-            net.WriteInt( self:GetActiveHealth(), 32 )
-            net.WriteInt( self:GetHealthCounts(), 16 )
-        net.Broadcast()
-    elseif ( CLIENT ) then
-        net.Start( "tdsze_boss_healthsyncrequest" )
-            net.WriteEntity( self:GetEntity() )
-        net.SendToServer()
-    end
-end
-
--- Object Management
-
-function GAMEMODE:AddBossObject( map, data )
-    if game.GetMap() != map then return end --doing this to keep the main table clean
-    if not data.entName then return end
-
-    local obj = BossMeta:Create( data.name, data.entName, data.counter )
+    local obj = BossMeta:Create( data.name, data.ent, data.counter )
     table.insert( self.Bosses, obj )
 end
 
-function GAMEMODE:GetBosses()
-    return self.Bosses or {}
+function ZE:GetBosses()
+    return self.Bosses
 end
 
-function GAMEMODE:GetBoss( ent )
-    for k, v in pairs( self:GetBosses() ) do
-        if v:GetCounter() == ent then
-            return v
+function ZE:GetBoss( ent )
+    for _, boss in pairs( self:GetBosses() ) do
+        if boss:GetCounterEntity() == ent then
+            return boss
+        end
+        if boss:GetIntakeEntity() == ent then
+            return boss
         end
     end
+end
+
+-- ██╗  ██╗ ██████╗  ██████╗ ██╗  ██╗███████╗
+-- ██║  ██║██╔═══██╗██╔═══██╗██║ ██╔╝██╔════╝
+-- ███████║██║   ██║██║   ██║█████╔╝ ███████╗
+-- ██╔══██║██║   ██║██║   ██║██╔═██╗ ╚════██║
+-- ██║  ██║╚██████╔╝╚██████╔╝██║  ██╗███████║
+-- ╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚══════╝
+
+hook.Add( "EntityTakeDamage", "tdsze_bossdamage", function( ent, dmginfo ) 
+    local boss = ZE:GetBoss( ent )
+    if boss then
+        boss:OnDamage( dmginfo )
+    end
+end)
+
+hook.Add( "EntityRemoved", "tdsze_bosskilled", function( ent )
+    local boss = ZE:GetBoss( ent )
+    if boss then
+        boss:OnKilled()
+    end
+end)
+
+hook.Add( "PostCleanupMap", "tdsze_enttypeupdate", function()
+    for _, boss in pairs( ZE:GetBosses() ) do
+        for k, v in pairs( ents.FindByName( boss:GetCounter() ) ) do
+            if COUNTERS[v:GetClass()] then
+                boss:SetType( OBJ_COUNTER )
+            elseif BREAKABLE[v:GetClass()] then
+                boss:SetType( OBJ_PHYSBOX )
+            end
+        end
+    end
+end)
+
+-- ███╗   ██╗███████╗████████╗██╗    ██╗ ██████╗ ██████╗ ██╗  ██╗██╗███╗   ██╗ ██████╗
+-- ████╗  ██║██╔════╝╚══██╔══╝██║    ██║██╔═══██╗██╔══██╗██║ ██╔╝██║████╗  ██║██╔════╝
+-- ██╔██╗ ██║█████╗     ██║   ██║ █╗ ██║██║   ██║██████╔╝█████╔╝ ██║██╔██╗ ██║██║  ███╗
+-- ██║╚██╗██║██╔══╝     ██║   ██║███╗██║██║   ██║██╔══██╗██╔═██╗ ██║██║╚██╗██║██║   ██║
+-- ██║ ╚████║███████╗   ██║   ╚███╔███╔╝╚██████╔╝██║  ██║██║  ██╗██║██║ ╚████║╚██████╔╝
+-- ╚═╝  ╚═══╝╚══════╝   ╚═╝    ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝
+
+if ( SERVER ) then
+
+    util.AddNetworkString( "tdsze_boss_sync" )
+
+    function BossMeta:Resync()
+
+        net.Start("tdsze_boss_sync")
+            net.WriteString( self:GetName() )
+            net.WriteInt( self:GetHealth(), 16 )
+            net.WriteInt( self:GetMaxHealth(), 16 )
+        net.Broadcast()
+    end
+
+elseif ( CLIENT ) then
+
+    net.Receive( "tdsze_boss_sync", function()
+        local name = net.ReadString()
+        local health = net.ReadInt( 16 )
+        local maxhealth = net.ReadInt( 16 )
+
+        SetActiveTarget( name, health, maxhealth )
+    end)
 end

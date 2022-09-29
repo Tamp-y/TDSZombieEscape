@@ -3,6 +3,8 @@ GM.Name = "Zombie Escape"
 INITIALLOADFINISHED = INITIALLOADFINISHED or false
 TDSFRAMEWORK = TDSFRAMEWORK or false
 
+ZE = {}
+
 DeriveGamemode( "tds" )
 
 print( "Loading Zombie Escape..." )
@@ -30,11 +32,28 @@ if SERVER then
     util.AddNetworkString( "tdsze_debugent" )
     util.AddNetworkString( "tdsze_debugent_request" )
 
+    function FindCounters()
+        print( "** Physboxes **" )
+        for k, v in pairs( ents.GetAll() ) do
+            if v:GetClass() != "func_physbox_multiplayer" then continue end
+            print( k, v, v:GetName() )
+        end
+
+        print( "** Math Counters **" )
+        for k, v in pairs( ents.GetAll() ) do
+            if v:GetClass() != "math_counter" then continue end
+            print( k, v, v:GetName() )
+        end
+    end
+    concommand.Add( "tdsze_locatecounters", FindCounters )
+
     net.Receive( "tdsze_debugent_request", function( _, ply ) 
         local ent = net.ReadEntity()
+        local name = ent:GetName()
         local kv = ent:GetKeyValues()
 
         net.Start( "tdsze_debugent" )
+            net.WriteString( name )
             net.WriteTable( kv )
         net.Send( ply )
     end)
@@ -59,7 +78,9 @@ elseif CLIENT then
     concommand.Add( "tdsze_debugent", EntInfo )
 
     net.Receive( "tdsze_debugent", function()
+        local name = net.ReadString()
         local tbl = net.ReadTable()
+        print( name )
         PrintTable( tbl )
     end)
 

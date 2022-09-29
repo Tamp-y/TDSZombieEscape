@@ -1,9 +1,29 @@
-function SetActiveTarget( ent )
-    Target = ent
+function SetActiveTarget( name, health, maxhealth )
+    Target = name
+    Target_Health = health
+    Target_MaxHealth = maxhealth
+
+    SetTargetLength( CurTime() + 3 )
+end
+
+function SetTargetLength( time )
+    Target_Length = time
 end
 
 function GetActiveTarget()
     return Target or nil
+end
+
+function GetTargetLength()
+    return Target_Length or 0
+end
+
+function GetActiveTargetHealth()
+    return Target_Health or 0
+end
+
+function GetActiveTargetMaxHealth()
+    return Target_MaxHealth or 0
 end
 
 function HasActiveTarget()
@@ -12,35 +32,12 @@ end
 
 function ClearActiveTarget()
     Target = nil
-end
-
-function SetTargetLength( time )
-    TargetLoss = time
-end
-
-function GetTargetLength()
-    return TargetLoss
+    Target_Health = nil
+    Target_MaxHealth = nil
 end
 
 hook.Add("Think", "TDS_ZombieEscapeTarget", function()
-    local validEnts = {
-        ["func_breakable"] = true,
-    }
-    local ply = LocalPlayer()
-    local wep = ply:GetActiveWeapon()
-    local trace = util.TraceLine({
-        start = ply:GetShootPos(),
-        endpos = ply:GetShootPos() + (ply:GetAimVector() * 10000),
-        filter = ply,
-        mask = MASK_SOLID
-    })
-    local ent = trace.Entity
-    if IsValid(ent) and validEnts[ent:GetClass()] and ent:Health() > 0 then
-        SetActiveTarget( ent )
-        SetTargetLength( CurTime() + 1 )
-    end
-
-    if HasActiveTarget() and CurTime() > GetTargetLength() or not IsValid( GetActiveTarget() ) then
+    if CurTime() > GetTargetLength() then
         ClearActiveTarget()
     end
 end)

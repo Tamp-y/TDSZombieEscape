@@ -1,1 +1,1 @@
-GM:AddBossObject( "" )
+local _ = nil

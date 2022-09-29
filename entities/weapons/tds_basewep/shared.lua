@@ -218,7 +218,7 @@ function SWEP:MeleeImpact( alt )
                 util.Effect( "BloodImpact", ef )
             end
             if SERVER then
-                ent:EmitSound( snd )
+                ply:EmitSound( snd )
 
                 local dam = alt and self:GetAltDamage() or self:GetDamage()
 
