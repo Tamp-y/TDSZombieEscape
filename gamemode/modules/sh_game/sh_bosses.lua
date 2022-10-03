@@ -121,15 +121,12 @@ end
 
 -- Actions
 
-function BossMeta:OnDamage( plydmg )
-    if IsValid( plydmg ) and plydmg:IsPlayer() then
+function BossMeta:OnDamage( dmginfo )
+    if IsValid( dmginfo:GetAttacker() ) and dmginfo:GetAttacker():IsPlayer() then
         self.Damage = self.Damage or {}
-        self.Damage[plydmg] = (self.Damage[plydmg] or 0) + 1
-    elseif IsValid( plydmg ) and plydmg:GetAttacker() then
-        self.Damage = self.Damage or {}
-        self.Damage[plydmg:GetAttacker()] = (self.Damage[plydmg:GetAttacker()] or 0) + plydmg:GetDamage()
+        self.Damage[dmginfo:GetAttacker()] = (self.Damage[dmginfo:GetAttacker()] or 0) + 1
+        self:Resync( dmginfo:GetAttacker() )
     end
-    self:Resync()
 end
 
 function BossMeta:OnKilled()
@@ -222,13 +219,12 @@ if ( SERVER ) then
 
     util.AddNetworkString( "tdsze_boss_sync" )
 
-    function BossMeta:Resync()
-
+    function BossMeta:Resync( ply )
         net.Start("tdsze_boss_sync")
             net.WriteString( self:GetName() )
             net.WriteInt( self:GetHealth(), 16 )
             net.WriteInt( self:GetMaxHealth(), 16 )
-        net.Broadcast()
+        net.Send( ply )
     end
 
 elseif ( CLIENT ) then

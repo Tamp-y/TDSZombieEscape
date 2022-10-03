@@ -13,11 +13,19 @@ local time = TDS_ClientConVar( "tds_hud_ze_time", 1, true )
 local time_xadd = TDS_ClientConVar( "tds_hud_ze_time_xadd", 0, true )
 local time_yadd = TDS_ClientConVar( "tds_hud_ze_time_yadd", 0, true )
 
+--[[
 HUDCOL_PRIMARY = HUDCOL_PRIMARY or Color( 0, 115, 150, 255 )
 HUDCOL_SECONDARY = HUDCOL_SECONDARY or Color( 0, 75, 100)
 HUDCOL_TERTIARY = HUDCOL_TERTIARY or Color( 100, 100, 100, 100 )
 HUDCOL_GOOD = HUDCOL_GOOD or Color( 150, 75, 50, 255 )
 HUDCOL_BAD = HUDCOL_BAD or Color( 150, 20, 20, 255 )
+]]
+
+HUDCOL_PRIMARY = Color( 0, 105, 200 )
+HUDCOL_SECONDARY = Color( 0, 45, 100 )
+HUDCOL_TERTIARY = Color( 125, 125, 125 )
+HUDCOL_GOOD = Color( 115, 175, 50 )
+HUDCOL_BAD = Color( 150, 20, 20, 255 )
 
 function GM:HUDPaint()
     if not tobool( hud:GetInt() ) then return end
@@ -32,31 +40,27 @@ function GM:HUDPaint()
         local xadd, yadd, width, height, outline = health_xadd:GetInt(), health_yadd:GetInt(), health_width:GetInt() * scale:GetInt(), health_height:GetInt() * scale:GetInt(), 1
         local xpos, ypos = 50, (ScrH() * 0.955) - height
         local x, y = (xpos + xadd) * scale:GetInt(), ypos + (yadd * scale:GetInt())
-        local colT = HUDCOL_TERTIARY:ToTable()
-        draw.SimpleTextOutlined( "HP", "TDSHudNormal", x, y + (height / 2), HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, 1, HUDCOL_SECONDARY )
-        x = x + (35 * scale:GetInt())
-        surface.SetDrawColor( colT[1], colT[2], colT[3], 50 )
-        surface.DrawRect( x, y, width, height, outline )
+        draw.SimpleTextOutlined( "HP", "TDSHudNormal", x, y + (height / 2) - 2, HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, 1, HUDCOL_SECONDARY )
+        x = x + (40 * scale:GetInt())
         surface.SetDrawColor( HUDCOL_SECONDARY )
-        surface.DrawOutlinedRect( x, y, width, height, outline )
+        surface.DrawOutlinedRect( x - 2, y - 2, width + 4, height + 4, outline )
         surface.SetDrawColor( HUDCOL_PRIMARY )
         surface.DrawRect( x + 1, y + 1, math.Clamp( ply:Health() / ply:GetMaxHealth() * width, 0, width ) - 2, height - 2 )
-        draw.SimpleTextOutlined( ply:Health(), "TDSHudSmall", x + width + 5, y + (height / 2), HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, 1, HUDCOL_SECONDARY )
+        draw.SimpleTextOutlined( ply:Health(), "TDSHudNormal", x + width + 10, y + (height / 2), HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, 1, HUDCOL_SECONDARY )
     end
 
+    --Target
     if HasActiveTarget() then
         local targetname, targethealth, targetmaxhealth = GetActiveTarget(), GetActiveTargetHealth(), GetActiveTargetMaxHealth()
         local width, height, outline = 250, 15, 1
         local xpos, ypos = ScrW() / 2 - width / 2, ScrH() * 0.3
         local x, y = xpos, ypos
-        local colT = HUDCOL_TERTIARY:ToTable()
-        surface.SetDrawColor( colT[1], colT[2], colT[3], 50 )
-        surface.DrawRect( x, y, width, height )
-        surface.SetDrawColor( HUDCOL_SECONDARY )
-        surface.DrawOutlinedRect( x, y, width, height )
-        surface.SetDrawColor( HUDCOL_PRIMARY )
+        local colT = HUDCOL_BAD:ToTable()
+        surface.SetDrawColor( HUDCOL_BAD )
+        surface.DrawOutlinedRect( x - 2, y - 2, width + 4, height + 4 )
+        surface.SetDrawColor( HUDCOL_BAD )
         surface.DrawRect( x, y, math.Clamp( (targethealth / targetmaxhealth) * width, 0, width ), height )
-        draw.SimpleTextOutlined( targetname, "TDSHudSmall", x + (width / 2), y + (height / 2) - 20, HUDCOL_PRIMARY, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, HUDCOL_SECONDARY )
+        draw.SimpleTextOutlined( targetname, "TDSHudSmall", x + (width / 2), y + (height / 2) - 20, HUDCOL_BAD, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, HUDCOL_TERTIARY )
         draw.SimpleTextOutlined( targethealth, "TDSHudSmall", x + (width / 2), y + (height / 2), HUDCOL_PRIMARY, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, HUDCOL_SECONDARY )
     end
 
@@ -69,7 +73,7 @@ function GM:HUDPaint()
     if GAMEMODE:InWarmup() then
         draw.SimpleTextOutlined( "Warmup ending in " .. math.ceil(GAMEMODE:CalculateTimeLeft()) .. " seconds.", "TDSHudNormal", ScrW() / 2, ScrH() * 0.35, HUDCOL_PRIMARY, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM, 1, HUDCOL_SECONDARY )
     else
-        if GAMEMODE:InPreSelection() and not SET["NoSelection"] then
+        if GAMEMODE:InPreSelection() and not tobool( SET["NoSelection"] ) then
             draw.SimpleTextOutlined( "Mother Zombies Spawning in " .. math.ceil(GAMEMODE:CalculateSelectionTimer()) .. " seconds.", "TDSHudSmall", ScrW() / 2, ScrH() * 0.275, HUDCOL_GOOD, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 1, HUDCOL_SECONDARY )
         end
         draw.SimpleTextOutlined( GAMEMODE:GetHumanScore() .. " - " .. GAMEMODE:GetZombieScore(), "TDSHudSmall", ScrW() / 2, 40, HUDCOL_PRIMARY, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 1, HUDCOL_SECONDARY )

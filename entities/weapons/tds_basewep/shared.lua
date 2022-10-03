@@ -31,7 +31,7 @@ function SWEP:SetCurrentSpread( val )
 end
 
 function SWEP:GetCurrentSpread()
-    return self.Spread or 0
+    return self.Spread or self:GetSpread()
 end
 
 function SWEP:SetNextReload( time )
@@ -126,11 +126,12 @@ function SWEP:Shoot()
     local Xspread, Yspread = self:GetSpread(), self:GetSpread()
     local bullet = {
         Attacker = ply,
-        Src = ply:GetShootPos(),
+        Src = ply:EyePos(),
         Dir = ply:GetAimVector(),
         Damage = self:GetDamage(),
         Num = self:GetBullets(),
         Spread = Vector( Xspread, Yspread, 0 ), --First and second value for spread, ignore third
+        IgnoreEntity = team.GetPlayers( ply:Team() )
     }
     ply:FireBullets( bullet )
 
@@ -323,7 +324,7 @@ function SWEP:GetStats()
 end
 
 function SWEP:GetDamage()
-    return self:GetSilenced() and self:GetStats().DamageSilencer or self:GetStats().Damage
+    return self:GetSilenced() and self:GetStats().DamageSilencer or self:GetStats().Damage or 1
 end
 
 function SWEP:GetAltDamage()
@@ -331,7 +332,7 @@ function SWEP:GetAltDamage()
 end
 
 function SWEP:GetSpread()
-    return self:GetSilenced() and self:GetStats().SpreadSilencer or self:GetStats().Spread
+    return self:GetSilenced() and self:GetStats().SpreadSilencer or self:GetStats().Spread or 0
 end
 
 function SWEP:GetBullets()
@@ -371,7 +372,7 @@ function SWEP:IsAltAutomatic()
 end
 
 function SWEP:GetMagSize()
-    return self:GetStats().Clip or 0
+    return self:GetStats().Clip or 1
 end
 
 function SWEP:GetReloadTime()

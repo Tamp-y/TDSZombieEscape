@@ -1,6 +1,6 @@
 -- Base Information
 
-SWEP.PrintName = "Infected Knife"
+SWEP.PrintName = "Knife"
 SWEP.Base = "tds_basewep"
 SWEP.ViewModel = "models/weapons/cstrike/c_knife_t.mdl"
 SWEP.ViewModelFOV = 50

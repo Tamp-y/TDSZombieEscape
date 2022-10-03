@@ -1,6 +1,8 @@
 function SWEP:DrawHUD()
-    local length, thick, shadowthick, space, opacity = 4, 1, 1, 5, 200
-    
+    local length, thick, shadowthick, space, opacity = 4, 1, 1, 1, 200
+
+    space = space + ( self:GetCurrentSpread() * 600 )
+
     --Crosshair Shadow
     surface.SetDrawColor( Color( 0, 0, 0, opacity ))
     surface.DrawRect( ScrW() / 2 - (thick / 2) - shadowthick, ScrH() / 2 - (thick / 2) - shadowthick, thick + (shadowthick * 2), thick + (shadowthick * 2) ) --Dot

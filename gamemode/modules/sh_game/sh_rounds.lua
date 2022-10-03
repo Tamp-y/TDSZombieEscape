@@ -219,7 +219,7 @@ if SERVER then
 
         if not GAMEMODE:InWarmup() and not GAMEMODE:RoundEnding() then
 
-            if not SET["NoSelection"] and not (SelectionOver or false) and CurTime() > GAMEMODE:GetSelectionTimer() then
+            if #player.GetAll() > 1 and not tobool( SET["NoSelection"] ) and not (SelectionOver or false) and CurTime() > GAMEMODE:GetSelectionTimer() then
                 GAMEMODE:MotherSelection()
             end
 
@@ -227,7 +227,7 @@ if SERVER then
                 GAMEMODE:EndRound( "zombie" )
             end
 
-            if not SET["NoSelection"] and #player.GetAll() > 1 and SelectionOver and CurTime() > (GAMEMODE:GetSelectionTimer() + 1) and (#team.GetPlayers( 3 ) > 0 and zAlive <= 0) then --All zombies died, humans win
+            if not tobool( SET["NoSelection"] ) and #player.GetAll() > 1 and SelectionOver and CurTime() > (GAMEMODE:GetSelectionTimer() + 1) and (#team.GetPlayers( 3 ) > 0 and zAlive <= 0) then --All zombies died, humans win
                 GAMEMODE:EndRound( "human" )
             end
 
