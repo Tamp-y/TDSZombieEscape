@@ -76,6 +76,7 @@ function GM:HUDPaint()
         if GAMEMODE:InPreSelection() and not tobool( SET["NoSelection"] ) then
             draw.SimpleTextOutlined( "Mother Zombies Spawning in " .. math.ceil(GAMEMODE:CalculateSelectionTimer()) .. " seconds.", "TDSHudSmall", ScrW() / 2, ScrH() * 0.275, HUDCOL_GOOD, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 1, HUDCOL_SECONDARY )
         end
+        draw.SimpleTextOutlined( "Round Ending in " .. GAMEMODE:TimeLeftMinutesSeconds(), "TDSHudSmall", ScrW() / 2, height + 5, HUDCOL_BAD, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 1, HUDCOL_SECONDARY )
         draw.SimpleTextOutlined( GAMEMODE:GetHumanScore() .. " - " .. GAMEMODE:GetZombieScore(), "TDSHudSmall", ScrW() / 2, 40, HUDCOL_PRIMARY, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 1, HUDCOL_SECONDARY )
         draw.SimpleTextOutlined( "Humans", "TDSHudSmall", ScrW() / 2 - 125, 10, HUDCOL_GOOD, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 1, HUDCOL_SECONDARY )
         draw.SimpleTextOutlined( #team.GetPlayers( 3 ), "TDSHudLarge", ScrW() / 2 - 125, 25, HUDCOL_GOOD, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 1, HUDCOL_SECONDARY )
