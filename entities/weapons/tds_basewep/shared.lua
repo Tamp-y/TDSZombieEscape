@@ -24,6 +24,14 @@ AddCSLuaFile( "hud.lua" )
 --  ╚████╔╝ ██║  ██║███████╗╚██████╔╝███████╗███████║
 --   ╚═══╝  ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚══════╝╚══════╝
 
+function SWEP:SetNextIdle( time )
+    self.NextIdle = time
+end
+
+function SWEP:GetNextIdle()
+    return self.NextIdle or 0
+end
+
 -- Gun Specific
 
 function SWEP:SetCurrentSpread( val )
@@ -299,7 +307,9 @@ function SWEP:PlaySequence( sequence )
     local anim = sequence
     local viewmodel = self.Owner:GetViewModel()
     local seq = self:RandomValue( anim )
+    local dur = viewmodel:SequenceDuration( viewmodel:LookupSequence( seq ) )
     viewmodel:SendViewModelMatchingSequence( viewmodel:LookupSequence( seq ) )
+    self:SetNextIdle( CurTime() + dur )
 end
 
 -- ███╗   ███╗██╗███████╗ ██████╗
@@ -434,5 +444,10 @@ function SWEP:Think()
             self:MeleeImpact( alt )
         end
 
+    end
+
+    if CurTime() > self:GetNextIdle() then
+        local anim = self:GetSilenced() and self:RandomValue( self.Anims.Silencer.Idle ) or self:RandomValue( self.Anims.Idle )
+        self:PlaySequence( anim )
     end
 end
