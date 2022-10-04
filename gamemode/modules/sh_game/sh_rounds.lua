@@ -203,11 +203,11 @@ if SERVER then
         if Developing() then return end
 
         local zAlive = 0
-            for k, v in pairs( team.GetPlayers( 2 ) ) do
-                if v:Alive() then
-                    zAlive = zAlive + 1
-                end
+        for k, v in pairs( team.GetPlayers( 2 ) ) do
+            if v:Alive() then
+                zAlive = zAlive + 1
             end
+        end
 
         if #player.GetAll() > 0 and not GAMEMODE:InWarmup() and not GAMEMODE.WarmupEnded then --Begin a warmup round
             GAMEMODE:StartWarmup()
