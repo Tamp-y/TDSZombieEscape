@@ -104,8 +104,9 @@ end
 function BossMeta:GetHealth()
     local health
     if self:GetType() == OBJ_COUNTER then
-        print( self:GetCounterEntity() )
-        health = self:GetCounterEntity():GetOutValue()
+        print( self:GetCounterEntity():Health() )
+        --print( self:GetCounterEntity() )
+        --health = self:GetCounterEntity():GetOutValue()
     elseif self:GetType() == OBJ_PHYSBOX then
         health = self:GetCounterEntity():Health()
     end
