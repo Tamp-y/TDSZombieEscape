@@ -1,67 +1,186 @@
 ENT.Base = "base_point"
 ENT.Type = "point"
 
+ENT.Inputs = {}
+
 function ENT:Initialize()
+    --Inputs
+    self.m_flMin = self.m_flMin or 0
+    self.m_flMax = self.m_flMax or 0
+    self.m_bHitMin = self.m_bHitMin or false
+    self.m_bHitMax = self.m_bHitMax or false
+    self.m_bDisabled = self.m_bDisabled or false
     
+    --Outputs
+    self.m_OutValue = self.m_OutValue or 0
+    self.m_OnGetValue = self.m_OnGetValue or 0
+    self.m_OnHitMin = self.m_OnHitMin or nil
+    self.m_OnHitMax = self.m_OnHitMax or nil
 end
 
-function ENT:AcceptInput( str, activator, caller, data )
-    if str == "Add" then
-
-    elseif str == "Subtract" then
-
-
-    print( str, activator )
+function ENT:AcceptInput( str, activator, call, data )
+    local inputc = self:FindInput( str )
+    if inputc then
+        inputc( self, data )
+    else
+        MsgC( Color( 180, 40, 40 ), "[ERROR] math_counter: Cannot find call by ID - '" .. str .. "'.\n" )
+    end
 end
 
--- Input Funcs
+function ENT:KeyValue( k, v )
+    lk, sv = string.lower( k ), tonumber( v )
+    if lk == "startvalue" then
+        self:SetValue( sv )
+		--return true
+	elseif lk == "min" then
+        self:SetMinimal( sv )
+	elseif lk == "max" then
+		self:SetMaximum( sv )
+	end
 
-function ENT:Add()
+    self:StoreOutput( k, v )
+end
 
+function ENT:FindInput( id )
+    return self.Inputs[ id ]
 end
 
 -- Values
 
-function ENT:SetObjectValue( int )
-    self:OnValueChanged( self.value, int )
-    self.value = int
+function ENT:SetValue( int )
+    local val = math.Clamp( int, self:GetMinimal(), self:GetMaximum() )
+
+    if val <= self:GetMinimal() and not self:GetIsMinimal() then --Value is less than minimal and not set to minimal
+        self:SetIsMinimal( true )
+        self:TriggerOutput( "OnHitMin" )
+    elseif self:GetIsMinimal() then
+        self:SetIsMinimal( false )
+    end
+
+    if val >= self:GetMaximum() and not self:GetIsMaximum() then --Value is more than maximum and not set to maximum
+        self:SetIsMaximum( true )
+        self:TriggerOutput( "OnHitMax" )
+    elseif self:GetIsMaximum() then
+        self:SetIsMaximum( false )
+    end
+
+    self.m_OutValue = val
 end
 
-function ENT:GetObjectValue()
-    return self.value or 0
+function ENT:GetValue()
+    return self.m_OutValue or 0
 end
 
-function ENT:SetMaxValue( int )
-    self.maxValue = int
+function ENT:SetMinimal( int )
+    self.m_flMin = int
 end
 
-function ENT:GetMaxValue()
-    return self.maxValue or 0
+function ENT:GetMinimal()
+    return self.m_flMin or 0
 end
 
-function ENT:SetMinValue( int )
-    self.minValue = int
+function ENT:SetMaximum( int )
+    self.m_flMax = int
 end
 
-function ENT:GetMinValue()
-    return self.minValue or 0
+function ENT:GetMaximum()
+    return self.m_flMax or 0
 end
 
--- Events
-
-function ENT:OnValueChanged( old, new )
-    hook.Call( "MathCounterValueChange", GAMEMODE, self )
-
-    if self:GetObjectValue() >= self:GetMaxValue() then self:OnHitMaxValue() end
-    if self:GetObjectValue() <= self:GetMinValue() then self:OnHitMinValue() end
+function ENT:SetIsMinimal( bool )
+    self.m_bHitMin = bool
 end
 
-function ENT:OnHitMaxValue()
-    local curValue = self:GetObjectValue()
-    hook.Call( "MathCounterHitMax", GAMEMODE, self )
+function ENT:GetIsMinimal()
+    return self.m_bHitMin or false
 end
 
-function ENT:OnHitMinValue()
-    local curValue = self:GetObjectValue()
-    hook.Call( "MathCounterHitMin", GAMEMODE, self )
+function ENT:SetIsMaximum( bool )
+    self.m_bHitMax = bool
 end
+
+function ENT:GetIsMaximum()
+    return self.m_bHitMax or false
+end
+
+function ENT:SetDisabled( bool )
+    self.m_bDisabled = bool
+end
+
+function ENT:GetDisabled()
+    return self.m_bDisabled or false
+end
+
+-- ██╗███╗   ██╗██████╗ ██╗   ██╗████████╗███████╗
+-- ██║████╗  ██║██╔══██╗██║   ██║╚══██╔══╝██╔════╝
+-- ██║██╔██╗ ██║██████╔╝██║   ██║   ██║   ███████╗
+-- ██║██║╚██╗██║██╔═══╝ ██║   ██║   ██║   ╚════██║
+-- ██║██║ ╚████║██║     ╚██████╔╝   ██║   ███████║
+-- ╚═╝╚═╝  ╚═══╝╚═╝      ╚═════╝    ╚═╝   ╚══════╝
+
+function ENT:CreateInput( id, data )
+    self.Inputs[ id ] = data
+end
+
+ENT.CreateInput( ENT, "Add", function( self, data )
+    local val = self:GetValue()
+    val = val + tonumber( data )
+    self:SetValue( val )
+end)
+
+ENT.CreateInput( ENT, "Subtract", function( self, data )
+    local val = self:GetValue()
+    val = val - tonumber( data )
+    self:SetValue( val )
+end)
+
+ENT.CreateInput( ENT, "Multiply", function( self, data )
+    local val = self:GetValue()
+    val = val * tonumber( data )
+    self:SetValue( val )
+end)
+
+ENT.CreateInput( ENT, "Divide", function( self, data )
+    local val = self:GetValue()
+    val = val / tonumber( data )
+    self:SetValue( val )
+end)
+
+ENT.CreateInput( ENT, "SetValue", function( self, data )
+    local val = tonumber( data )
+    self:SetValue( val )
+end)
+
+ENT.CreateInput( ENT, "SetValueNoFire", function( self, data )
+    local val = tonumber( data )
+    self.m_OutValue = val
+end)
+
+ENT.CreateInput( ENT, "SetHitMax", function( self, data )
+    local val = tonumber( data )
+    self:SetMaximum( val )
+end)
+
+ENT.CreateInput( ENT, "SetHitMin", function( self, data )
+    local val = tonumber( data )
+    self:SetMinimum( val )
+end)
+
+ENT.CreateInput( ENT, "Enable", function( self )
+    self:SetDisabled( false )
+end)
+
+ENT.CreateInput( ENT, "Disable", function( self )
+    self:SetDisabled( true )
+end)
+
+ENT.CreateInput( ENT, "Kill", function( self )
+    self:Remove()
+end)
+
+--[[ I fogor...
+ENT.CreateInput( ENT, "GetValue", function( self, data )
+    local val = tonumber( data )
+    self:SetMinimum( val )
+end)
+]]
