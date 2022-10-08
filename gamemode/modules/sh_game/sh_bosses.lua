@@ -14,6 +14,8 @@ local COUNTERS = {
 }
 local BREAKABLE = {
     ["func_physbox_multiplayer"] = true,
+    ["func_breakable"] = true,
+    ["prop_physics"] = true,
 }
 
 -- ███╗   ███╗███████╗████████╗██╗  ██╗ ██████╗ ██████╗ ███████╗
@@ -104,9 +106,7 @@ end
 function BossMeta:GetHealth()
     local health
     if self:GetType() == OBJ_COUNTER then
-        print( self:GetCounterEntity():Health() )
-        --print( self:GetCounterEntity() )
-        --health = self:GetCounterEntity():GetOutValue()
+        health = self:GetCounterEntity():GetValue()
     elseif self:GetType() == OBJ_PHYSBOX then
         health = self:GetCounterEntity():Health()
     end
@@ -142,6 +142,7 @@ function BossMeta:OnKilled()
                 i = i + 1
             end
         end
+        self.Damage = nil
     end
 end
 
