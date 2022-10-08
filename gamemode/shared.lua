@@ -33,17 +33,25 @@ if SERVER then
     util.AddNetworkString( "tdsze_debugent_request" )
 
     function FindCounters()
+        print( "\n\n" )
         print( "** Physboxes **" )
         for k, v in pairs( ents.GetAll() ) do
             if v:GetClass() != "func_physbox_multiplayer" then continue end
             print( k, v, v:GetName() )
         end
-
+        
         print( "** Math Counters **" )
         for k, v in pairs( ents.GetAll() ) do
             if v:GetClass() != "math_counter" then continue end
             print( k, v, v:GetName() )
         end
+        
+        print( "** Breakable **" )
+        for k, v in pairs( ents.GetAll() ) do
+            if v:GetClass() != "func_breakable" then continue end
+            print( k, v, v:GetName() )
+        end
+        print( "\n\n" )
     end
     concommand.Add( "tdsze_locatecounters", FindCounters )
 
@@ -80,7 +88,7 @@ elseif CLIENT then
     net.Receive( "tdsze_debugent", function()
         local name = net.ReadString()
         local tbl = net.ReadTable()
-        print( name )
+        print( "NAMEID = " .. name )
         PrintTable( tbl )
     end)
 
