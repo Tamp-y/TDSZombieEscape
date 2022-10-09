@@ -233,7 +233,7 @@ if SERVER then
 
         end
 
-        if CurTime() > GAMEMODE:GetTimer() then
+        if not Developing() and CurTime() > GAMEMODE:GetTimer() then
             GAMEMODE:ResetRound()
         end
     end)

@@ -36,11 +36,14 @@ function BossMeta:Create( name, ent, counter )
     obj.ent = ent --The entity that takes the damage
     obj.counter = counter --The counter for the health
 
-    for k, v in pairs( ents.FindByName( obj.counter ) ) do
-        if COUNTERS[v:GetClass()] then
-            obj.type = OBJ_COUNTER
-        elseif BREAKABLE[v:GetClass()] then
-            obj.type = OBJ_PHYSBOX
+    if SERVER then
+        obj:SetType( OBJ_COUNTER )
+        local ent = obj:GetCounterEntity()
+        if COUNTERS[ent:GetClass()] then
+            obj:SetType( OBJ_COUNTER )
+        end
+        if BREAKABLE[ent:GetClass()] then
+            obj:SetType( OBJ_PHYSBOX )
         end
     end
 
@@ -67,6 +70,10 @@ end
 
 function BossMeta:SetHealth( int )
     self.health = int
+
+    if self:GetType() == OBJ_PHYSBOX then
+        ent:SetHealth( self.health )
+    end
 end
 
 function BossMeta:SetMaxHealth( int )
@@ -107,8 +114,9 @@ function BossMeta:GetHealth()
     local health
     if self:GetType() == OBJ_COUNTER then
         health = self:GetCounterEntity():GetValue()
-    elseif self:GetType() == OBJ_PHYSBOX then
-        health = self:GetCounterEntity():Health()
+    end
+    if self:GetType() == OBJ_PHYSBOX then
+        health = self:GetIntakeEntity():Health()
     end
     return health or 1
 end
@@ -153,12 +161,15 @@ end
 -- ██║ ╚═╝ ██║██║  ██║██║ ╚████║██║  ██║╚██████╔╝███████╗██║ ╚═╝ ██║███████╗██║ ╚████║   ██║
 -- ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝
 
-ZE.Bosses = {}
+ZE.Bosses = ZE.Bosses or {}
 
 function ZE:AddBoss( map, data )
     if game.GetMap() != map then return end --doing this to keep the main table clean if we arent on the map.
 
     local obj = BossMeta:Create( data.name, data.ent, data.counter )
+    if data.health then
+        obj:SetHealth( data.health )
+    end
     table.insert( self.Bosses, obj )
 end
 
@@ -200,14 +211,22 @@ end)
 
 hook.Add( "PostCleanupMap", "tdsze_enttypeupdate", function()
     for _, boss in pairs( ZE:GetBosses() ) do
-        for k, v in pairs( ents.FindByName( boss:GetCounter() ) ) do
-            if COUNTERS[v:GetClass()] then
+        local ent = boss:GetCounterEntity()
+        if IsValid( ent ) then
+            if COUNTERS[ent:GetClass()] then
                 boss:SetType( OBJ_COUNTER )
-            elseif BREAKABLE[v:GetClass()] then
+            end
+            if BREAKABLE[ent:GetClass()] then
                 boss:SetType( OBJ_PHYSBOX )
             end
+        else
+            boss:SetType( OBJ_PHYSBOX )
         end
     end
+end)
+
+hook.Add( "InitPostEntity", "tdsze_updatent", function()
+
 end)
 
 -- ███╗   ██╗███████╗████████╗██╗    ██╗ ██████╗ ██████╗ ██╗  ██╗██╗███╗   ██╗ ██████╗

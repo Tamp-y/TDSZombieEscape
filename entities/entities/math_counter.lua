@@ -178,9 +178,6 @@ ENT.CreateInput( ENT, "Kill", function( self )
     self:Remove()
 end)
 
---[[ I fogor...
 ENT.CreateInput( ENT, "GetValue", function( self, data )
-    local val = tonumber( data )
-    self:SetMinimum( val )
+    self:TriggerOutput( "OnGetValue" )
 end)
-]]

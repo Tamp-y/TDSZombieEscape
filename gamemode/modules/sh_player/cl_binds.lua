@@ -1,12 +1,12 @@
 hook.Add( "PlayerButtonDown", "TDS_ZombieEscape_Binds", function( ply, button )
     if not IsFirstTimePredicted() then return end
 
-    local f1 = input.LookupBinding( "gm_showhelp" )
-    local f2 = input.LookupBinding( "showteam" )
-    local f3 = input.LookupBinding( "showspare1" )
-    local f4 = input.LookupBinding( "showspare2" )
+    local help = input.LookupBinding( "gm_showhelp" )
+    local shteam = input.LookupBinding( "gm_showteam" )
+    local spare1 = input.LookupBinding( "gm_showspare1" )
+    local spare2 = input.LookupBinding( "gm_showspare2" )
     
-    if input.GetKeyName( button ) == f1 then
+    if input.GetKeyName( button ) == spare2 then
         ZESettings()
     end
 end )

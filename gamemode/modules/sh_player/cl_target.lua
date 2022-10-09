@@ -3,7 +3,7 @@ function SetActiveTarget( name, health, maxhealth )
     Target_Health = health
     Target_MaxHealth = maxhealth
 
-    SetTargetLength( CurTime() + 3 )
+    SetTargetLength( CurTime() + 5 )
 end
 
 function SetTargetLength( time )
@@ -19,11 +19,11 @@ function GetTargetLength()
 end
 
 function GetActiveTargetHealth()
-    return Target_Health or 0
+    return Target_Health or 100
 end
 
 function GetActiveTargetMaxHealth()
-    return Target_MaxHealth or 0
+    return Target_MaxHealth or 100
 end
 
 function HasActiveTarget()

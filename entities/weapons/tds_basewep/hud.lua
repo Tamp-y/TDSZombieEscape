@@ -4,7 +4,8 @@ function SWEP:DrawHUD()
     space = space + ( self:GetCurrentSpread() * 600 )
 
     --Crosshair Shadow
-    surface.SetDrawColor( Color( 0, 0, 0, opacity ))
+    local colT = HUDCOL_BLACK:ToTable()
+    surface.SetDrawColor( Color( colT[1], colT[2], colT[3], opacity ) )
     surface.DrawRect( ScrW() / 2 - (thick / 2) - shadowthick, ScrH() / 2 - (thick / 2) - shadowthick, thick + (shadowthick * 2), thick + (shadowthick * 2) ) --Dot
     surface.DrawRect( ScrW() / 2 - (thick / 2) - (length + space) - shadowthick, ScrH() / 2 - (thick / 2) - shadowthick, length + (shadowthick * 2), thick + (shadowthick * 2) ) --Left Line
     surface.DrawRect( ScrW() / 2 + (thick / 2) + space - shadowthick, ScrH() / 2 - (thick / 2) - shadowthick, length + (shadowthick * 2), thick + (shadowthick * 2) ) --Right Line
@@ -24,11 +25,12 @@ function SWEP:DrawHUD()
         --Ammo
         local width, height, xoff, yoff = 250, 70, 50, 50
         local boxx, boxy = ScrW() - (width + xoff), ScrH() - (height + yoff)
-        surface.SetDrawColor( HUDCOL_SECONDARY )
+        local colT = HUDCOL_TERTIARY:ToTable()
+        surface.SetDrawColor( colT[1], colT[2], colT[3], 200 )
         surface.DrawRect( boxx, boxy, width, height )
-        draw.SimpleText( "Ammo", "TDSHudNormal", boxx + 5, boxy + 5, HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP )
-        draw.SimpleText( self:Clip1() .. " / " .. self:GetMagSize(), "TDSHudNormal", boxx + 5, boxy + 60, HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM )
-        draw.SimpleText( self:GetAmmoTypeName(), "TDSHudNormal", boxx + 235, boxy + 60, HUDCOL_PRIMARY, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM )
+        draw.SimpleTextOutlined( "Ammo", "TDSHudNormal", boxx + 5, boxy + 5, HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, HUDCOL_BLACK )
+        draw.SimpleTextOutlined( self:Clip1() .. " / " .. self:GetMagSize(), "TDSHudNormal", boxx + 5, boxy + 60, HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, HUDCOL_BLACK )
+        draw.SimpleTextOutlined( self:GetAmmoTypeName(), "TDSHudNormal", boxx + 235, boxy + 5, HUDCOL_PRIMARY, TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP, 1, HUDCOL_BLACK )
     end
 end
 
