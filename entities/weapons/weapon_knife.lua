@@ -2,8 +2,8 @@
 
 SWEP.PrintName = "Knife"
 SWEP.Base = "tds_basewep"
-SWEP.ViewModel = "models/weapons/cstrike/c_knife_t.mdl"
-SWEP.ViewModelFOV = 50
+SWEP.ViewModel = "models/weapons/v_knife_t.mdl"--"models/weapons/cstrike/c_knife_t.mdl"
+SWEP.ViewModelFOV = 75
 SWEP.WorldModel = "models/weapons/w_knife_t.mdl"
 SWEP.Slot = 2
 
@@ -57,7 +57,7 @@ SND.AltMiss = {
 
 SWEP.Anims = {}
 ANM = SWEP.Anims
-ANM.Idle = "idle_cycle"
+ANM.Idle = "idle"
 ANM.Draw = "draw"
 ANM.Attack = {
     "midslash1",

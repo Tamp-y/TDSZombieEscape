@@ -31,6 +31,14 @@ function SWEP:DrawHUD()
         draw.SimpleTextOutlined( "Ammo", "TDSHudNormal", boxx + 5, boxy + 5, HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, HUDCOL_BLACK )
         draw.SimpleTextOutlined( self:Clip1() .. " / " .. self:GetMagSize(), "TDSHudNormal", boxx + 5, boxy + 60, HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, HUDCOL_BLACK )
         draw.SimpleTextOutlined( self:GetAmmoTypeName(), "TDSHudNormal", boxx + 235, boxy + 5, HUDCOL_PRIMARY, TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP, 1, HUDCOL_BLACK )
+    elseif self:IsUtility() then
+        local width, height, xoff, yoff = 250, 70, 50, 50
+        local boxx, boxy = ScrW() - (width + xoff), ScrH() - (height + yoff)
+        local colT = HUDCOL_TERTIARY:ToTable()
+        surface.SetDrawColor( colT[1], colT[2], colT[3], 200 )
+        surface.DrawRect( boxx, boxy, width, height )
+        draw.SimpleTextOutlined( self.PrintName, "TDSHudNormal", boxx + 5, boxy + 5, HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, HUDCOL_BLACK )
+        draw.SimpleTextOutlined( self:Clip1(), "TDSHudNormal", boxx + 5, boxy + 60, HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, HUDCOL_BLACK )
     end
 end
 

@@ -1,7 +1,7 @@
 Settings = {}
 SET = Settings
 
-SET["Developer"] = 0 --Enable/Disable Developing Mode, this turns off most game features.
+SET["Developer"] = 1 --Enable/Disable Developing Mode, this turns off most game features.
 
 --Timer/Round
 SET["MapLength"] = 1800 --Time left on a map before map changes (seconds)
@@ -27,7 +27,7 @@ SET["HWeapons"] = { --Default weapons to spawn with (TDSFramework will override 
     "weapon_m4a1",
     "weapon_usp",
     "weapon_knife",
-    --"weapon_he",
+    "weapon_he",
 }
 SET["ZWeapons"] = { --Default weapons to spawn with
     "weapon_knife_z",

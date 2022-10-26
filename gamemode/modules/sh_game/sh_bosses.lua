@@ -14,6 +14,7 @@ local COUNTERS = {
 }
 local BREAKABLE = {
     ["func_physbox_multiplayer"] = true,
+    ["func_physbox"] = true,
     ["func_breakable"] = true,
     ["prop_physics"] = true,
 }
@@ -27,24 +28,13 @@ local BREAKABLE = {
 
 BossMeta = {}
 
-function BossMeta:Create( name, ent, counter )
+function BossMeta:Create( tbl )
     local obj = {}
     setmetatable( obj, BossMeta )
     self.__index = self
 
-    obj.name = name --Display name for clients
-    obj.ent = ent --The entity that takes the damage
-    obj.counter = counter --The counter for the health
-
-    if SERVER then
-        obj:SetType( OBJ_COUNTER )
-        local ent = obj:GetCounterEntity()
-        if COUNTERS[ent:GetClass()] then
-            obj:SetType( OBJ_COUNTER )
-        end
-        if BREAKABLE[ent:GetClass()] then
-            obj:SetType( OBJ_PHYSBOX )
-        end
+    for k, v in pairs( tbl ) do
+        obj[k] = v
     end
 
     return obj
@@ -71,9 +61,44 @@ end
 function BossMeta:SetHealth( int )
     self.health = int
 
-    if self:GetType() == OBJ_PHYSBOX then
-        ent:SetHealth( self.health )
+    if self:GetType() == OBJ_COUNTER then
+        local ent = self:GetCounterEntity()
+        if IsValid( ent ) then
+            ent:SetValue( int )
+        end
     end
+    if self:GetType() == OBJ_PHYSBOX then
+        local ent = self:GetCounterEntity()
+        if IsValid( ent ) then
+            ent:SetHealth( int )
+        end
+    end
+end
+
+function BossMeta:UpdateHealth() --Preferable use this when finalizing a boss' health, will do the calculations for you.
+    local ent = self:GetCounterEntity()
+    if not IsValid( ent ) then return end
+
+    if not self:GetType() then
+        if BREAKABLE[ent:GetClass()] then
+            self:SetType( OBJ_PHYSBOX )
+        end
+        if COUNTERS[ent:GetClass()] then
+            self:SetType( OBJ_COUNTER )
+        end
+    end
+
+    if (self:GetCounterEntity().healthUpdated or false) then return end
+
+    local health = self.healthOverride or self:GetType() == OBJ_PHYSBOX and ent:Health() or self:GetType() == OBJ_COUNTER and ent:GetValue()
+
+    if self.healthPerPlayer then
+        local humans = math.Clamp( #team.GetPlayers() - 1, 0, game.MaxPlayers() ) --Minus one, because base hp would be what one player would be fighting against.
+        health = health + (self.healthPerPlayer * humans)
+    end
+
+    self:GetCounterEntity().healthUpdated = true
+    self:SetHealth( health )
 end
 
 function BossMeta:SetMaxHealth( int )
@@ -111,14 +136,14 @@ function BossMeta:GetCounterEntity()
 end
 
 function BossMeta:GetHealth()
-    local health
+    local health = 1
     if self:GetType() == OBJ_COUNTER then
         health = self:GetCounterEntity():GetValue()
     end
     if self:GetType() == OBJ_PHYSBOX then
-        health = self:GetIntakeEntity():Health()
+        health = self:GetCounterEntity():Health()
     end
-    return health or 1
+    return health
 end
 
 function BossMeta:GetMaxHealth()
@@ -134,13 +159,16 @@ function BossMeta:OnDamage( dmginfo )
     if IsValid( dmginfo:GetAttacker() ) and dmginfo:GetAttacker():IsPlayer() then
         self.Damage = self.Damage or {}
         self.Damage[dmginfo:GetAttacker()] = (self.Damage[dmginfo:GetAttacker()] or 0) + 1
+        self:UpdateHealth()
         self:Resync( dmginfo:GetAttacker() )
     end
 end
 
 function BossMeta:OnKilled()
-    if self.Damage then
+    if self.Damage and not (self:GetCounterEntity().killed or false) then
         for k, v in pairs( player.GetAll() ) do
+            self:GetCounterEntity().killed = true
+
             v:ChatPrint( "===== Boss Defeated =====" )
             v:ChatPrint( "Highest Damagers:" )
             local i = 1
@@ -161,15 +189,12 @@ end
 -- ██║ ╚═╝ ██║██║  ██║██║ ╚████║██║  ██║╚██████╔╝███████╗██║ ╚═╝ ██║███████╗██║ ╚████║   ██║
 -- ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝
 
-ZE.Bosses = ZE.Bosses or {}
+ZE.Bosses = {}
 
 function ZE:AddBoss( map, data )
     if game.GetMap() != map then return end --doing this to keep the main table clean if we arent on the map.
 
-    local obj = BossMeta:Create( data.name, data.ent, data.counter )
-    if data.health then
-        obj:SetHealth( data.health )
-    end
+    local obj = BossMeta:Create( data )
     table.insert( self.Bosses, obj )
 end
 
@@ -179,10 +204,10 @@ end
 
 function ZE:GetBoss( ent )
     for _, boss in pairs( self:GetBosses() ) do
-        if boss:GetCounterEntity() == ent then
+        if IsValid( boss:GetCounterEntity() ) and boss:GetCounterEntity() == ent then
             return boss
         end
-        if boss:GetIntakeEntity() == ent then
+        if IsValid( boss:GetIntakeEntity() ) and boss:GetIntakeEntity() == ent then
             return boss
         end
     end
@@ -199,34 +224,28 @@ hook.Add( "EntityTakeDamage", "tdsze_bossdamage", function( ent, dmginfo )
     local boss = ZE:GetBoss( ent )
     if boss then
         boss:OnDamage( dmginfo )
-    end
-end)
-
-hook.Add( "EntityRemoved", "tdsze_bosskilled", function( ent )
-    local boss = ZE:GetBoss( ent )
-    if boss then
-        boss:OnKilled()
-    end
-end)
-
-hook.Add( "PostCleanupMap", "tdsze_enttypeupdate", function()
-    for _, boss in pairs( ZE:GetBosses() ) do
-        local ent = boss:GetCounterEntity()
-        if IsValid( ent ) then
-            if COUNTERS[ent:GetClass()] then
-                boss:SetType( OBJ_COUNTER )
-            end
-            if BREAKABLE[ent:GetClass()] then
-                boss:SetType( OBJ_PHYSBOX )
-            end
-        else
-            boss:SetType( OBJ_PHYSBOX )
+        if boss:GetHealth() <= 0 then
+            boss:OnKilled()
         end
     end
 end)
 
-hook.Add( "InitPostEntity", "tdsze_updatent", function()
+hook.Add( "PostCleanupMap", "tdsze_enttypeupdate", function()
+    if SERVER then
+        for _, boss in pairs( ZE:GetBosses() ) do
+            if boss.health then
+                boss:UpdateHealth()
+            end
+        end
+    end
+end)
 
+hook.Add( "CounterSetValue", "tdsze_bossfixhealth", function( ent, int ) 
+    for k, v in pairs( ZE:GetBosses() ) do
+        if v.counter == ent:GetName() and v.healthOverride then
+            ent:SetValue( v.healthOverride, true )
+        end
+    end
 end)
 
 -- ███╗   ██╗███████╗████████╗██╗    ██╗ ██████╗ ██████╗ ██╗  ██╗██╗███╗   ██╗ ██████╗

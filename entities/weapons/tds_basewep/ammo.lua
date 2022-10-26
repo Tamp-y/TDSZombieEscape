@@ -1,5 +1,11 @@
 hook.Add( "Initialize", "tds_basewep_ammotypes", function()
     game.AddAmmoType( {
+        name = "7.62x39mm",
+        dmgtype = DMG_BULLET,
+        tracer = TRACER_LINE,
+    } )
+
+    game.AddAmmoType( {
         name = "5.56x45mm",
         dmgtype = DMG_BULLET,
         tracer = TRACER_LINE,
@@ -7,6 +13,12 @@ hook.Add( "Initialize", "tds_basewep_ammotypes", function()
 
     game.AddAmmoType( {
         name = "5.7x28mm",
+        dmgtype = DMG_BULLET,
+        tracer = TRACER_LINE,
+    } )
+
+    game.AddAmmoType( {
+        name = ".45ACP",
         dmgtype = DMG_BULLET,
         tracer = TRACER_LINE,
     } )

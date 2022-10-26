@@ -47,7 +47,7 @@ end
 
 -- Values
 
-function ENT:SetValue( int )
+function ENT:SetValue( int, nocall )
     local val = math.Clamp( int, self:GetMinimal(), self:GetMaximum() )
 
     if val <= self:GetMinimal() and not self:GetIsMinimal() then --Value is less than minimal and not set to minimal
@@ -62,6 +62,10 @@ function ENT:SetValue( int )
         self:TriggerOutput( "OnHitMax" )
     elseif self:GetIsMaximum() then
         self:SetIsMaximum( false )
+    end
+
+    if not (nocall or false) then
+        hook.Call( "CounterSetValue", nil, self, val )
     end
 
     self.m_OutValue = val

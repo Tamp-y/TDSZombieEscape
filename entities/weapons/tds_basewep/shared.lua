@@ -72,6 +72,24 @@ function SWEP:GetImpactDelay()
     return self.ImpactWait or 0, self.ImpactAlt or false
 end
 
+-- Utility Specific
+
+function SWEP:SetPrepared( bool )
+    self.Prepared = bool
+end
+
+function SWEP:GetPrepared()
+    return self.Prepared or false
+end
+
+function SWEP:SetPreparedIn( time )
+    self.PreparedIn = time
+end
+
+function SWEP:GetPreparedIn()
+    return self.PreparedIn or 0
+end
+
 --  ██████╗██╗  ██╗███████╗ ██████╗██╗  ██╗███████╗
 -- ██╔════╝██║  ██║██╔════╝██╔════╝██║ ██╔╝██╔════╝
 -- ██║     ███████║█████╗  ██║     █████╔╝ ███████╗
@@ -117,6 +135,17 @@ function SWEP:IsMelee()
 end
 
 function SWEP:CanMelee()
+    return true
+end
+
+-- Utility Specific
+
+function SWEP:IsUtility()
+    if self.WeaponType == "utility" then return true end
+    return false
+end
+
+function SWEP:CanUtilize()
     return true
 end
 
@@ -247,6 +276,39 @@ function SWEP:MeleeImpact( alt )
     end
 end
 
+-- Utility Specific
+
+function SWEP:PrepareUtility()
+    local anim = self:RandomValue( self.Anims.Ready )
+    self:PlaySequence( anim )
+    self:SetPreparedIn( CurTime() + self:GetPrepareDelay() )
+    self:SetNextPrimaryFire( CurTime() + self:GetPrepareDelay() )
+end
+
+function SWEP:ThrowUtility()
+    local ply = self.Owner and self.Owner or self:GetOwner()
+
+    if SERVER then
+        local ent = ents.Create( self.Entity )
+        ent:SetOwner( ply )
+        ent:SetDamage( self:GetDamage() )
+        ent:SetFuse( CurTime() + self:GetFuse() )
+        ent:SetPos( ply:GetShootPos() )
+        ent:Spawn()
+        local physobj = ent:GetPhysicsObject()
+        physobj:SetVelocity( ply:GetVelocity() + (ply:EyeAngles():Forward() * 1500) + Vector( 0, 0, 100 ) )
+        physobj:Wake()
+    end
+
+    self:SetClip1( self:Clip1() - 1 )
+    if SERVER and self:Clip1() <= 0 then
+        ply:StripWeapon( self:GetClass() )
+    else
+        local anim = self:RandomValue( self.Anims.Draw )
+        self:PlaySequence( anim ) 
+    end
+end
+
 --  █████╗  ██████╗████████╗██╗ ██████╗ ███╗   ██╗     ██████╗ █████╗ ██╗     ██╗     ███████╗
 -- ██╔══██╗██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║    ██╔════╝██╔══██╗██║     ██║     ██╔════╝
 -- ███████║██║        ██║   ██║██║   ██║██╔██╗ ██║    ██║     ███████║██║     ██║     ███████╗
@@ -272,15 +334,25 @@ end
 
 function SWEP:PrimaryAttack()
     if self:IsGun() then
+
         if self:CanShoot() then 
             self:Shoot()
         elseif self:Clip1() <= 0 and self:CanReload() then
             self:ReloadGun()
         end
+
     elseif self:IsMelee() then
+
         if self:CanMelee() then
             self:SwingMelee()
         end
+
+    elseif self:IsUtility() then
+
+        if self:CanUtilize() then
+            self:PrepareUtility()
+        end
+
     end
 end
 
@@ -291,8 +363,21 @@ function SWEP:SecondaryAttack()
 end
 
 function SWEP:Reload()
-    if self:CanReload() then
-        self:ReloadGun()
+
+    if self:IsGun() then
+
+        if self:CanReload() then
+            self:ReloadGun()
+        end
+
+    elseif self:IsUtility() then
+
+        if self:GetPrepared() then
+            self:SetPrepared( false )
+            local anim = self:RandomValue( self.Anims.Draw )
+            self:PlaySequence( anim )
+        end
+
     end
 end
 
@@ -305,7 +390,8 @@ end
 
 function SWEP:PlaySequence( sequence )
     local anim = sequence
-    local viewmodel = self.Owner:GetViewModel()
+    local viewmodel = self:GetOwner() and self:GetOwner().GetViewModel and self:GetOwner():GetViewModel() or nil
+    if not viewmodel or not IsValid( viewmodel ) then return end
     local seq = self:RandomValue( anim )
     local dur = viewmodel:SequenceDuration( viewmodel:LookupSequence( seq ) )
     viewmodel:SendViewModelMatchingSequence( viewmodel:LookupSequence( seq ) )
@@ -357,6 +443,14 @@ function SWEP:GetFirerate()
     return self:GetStats().Firerate or 60/60
 end
 
+function SWEP:GetPrepareDelay()
+    return self:GetStats().PrepareDelay or 1
+end
+
+function SWEP:GetFuse()
+    return self:GetStats().Fuse or 1
+end
+
 function SWEP:GetImpact()
     return self:GetStats().Impact or 0.1
 end
@@ -405,6 +499,10 @@ function SWEP:ImpactDelaying()
     if self:GetImpactDelay() > 0 then return true else return false end
 end
 
+function SWEP:IsPreparing()
+    if self:GetPreparedIn() > 0 then return true else return false end
+end
+
 -- ████████╗██╗  ██╗ ██████╗ ███╗   ██╗██╗  ██╗██╗███╗   ██╗ ██████╗
 -- ╚══██╔══╝██║  ██║██╔═══██╗████╗  ██║██║ ██╔╝██║████╗  ██║██╔════╝
 --    ██║   ███████║██║   ██║██╔██╗ ██║█████╔╝ ██║██╔██╗ ██║██║  ███╗
@@ -417,6 +515,8 @@ function SWEP:Think()
     self:SetWeaponHoldType( self.HoldType )
     if self:IsAutomatic() then self.Primary.Automatic = true else self.Primary.Automatic = false end
     if self:IsAltAutomatic() then self.Secondary.Automatic = true else self.Secondary.Automatic = false end
+
+    local ply = self.Owner and self.Owner or self:GetOwner()
 
     if self:IsGun() then
 
@@ -444,9 +544,23 @@ function SWEP:Think()
             self:MeleeImpact( alt )
         end
 
+    elseif self:IsUtility() then
+
+        --Preparing
+        if self:IsPreparing() and CurTime() > self:GetPreparedIn() then
+            self:SetPreparedIn( 0 )
+            self:SetPrepared( true )
+        end
+
+        --Throwing
+        if self:GetPrepared() and not ply:KeyDown( IN_ATTACK ) then
+            self:ThrowUtility()
+            self:SetPrepared( false )
+        end
+
     end
 
-    if CurTime() > self:GetNextIdle() then
+    if SERVER and CurTime() > self:GetNextIdle() and not (self:GetPrepared() or self:IsPreparing()) then
         local anim = self:GetSilenced() and self:RandomValue( self.Anims.Silencer.Idle ) or self:RandomValue( self.Anims.Idle )
         self:PlaySequence( anim )
     end
