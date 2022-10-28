@@ -18,8 +18,11 @@ if ( SERVER ) then
         self:Remove()
         local explosion = EffectData()
         explosion:SetOrigin( self:GetPos() )
-        util.Effect( "Explosion", explosion )
-        util.BlastDamage( self, self:GetOwner(), self:GetPos(), 200, 100 )
+        explosion:SetFlags( 4 )
+        util.Effect( "Explosion", explosion, false )
+        local snd = self:GetAudioTable().Explode
+        self:EmitSound( snd, 110, 100, 1, CHAN_WEAPON, nil, 2 )
+        util.BlastDamage( self, self:GetOwner(), (self:GetPos() + self:OBBCenter()), self:GetRadius(), self:GetDamage() )
     end
 
     function ENT:Think()
@@ -54,7 +57,7 @@ function ENT:SetDamage( int )
 end
 
 function ENT:GetDamage()
-    return self.Damage
+    return self.Damage or 100
 end
 
 function ENT:SetRadius( int )
@@ -62,7 +65,7 @@ function ENT:SetRadius( int )
 end
 
 function ENT:GetRadius()
-    return self.Radius
+    return self.Radius or 200
 end
 
 function ENT:SetFuse( time )
@@ -70,5 +73,13 @@ function ENT:SetFuse( time )
 end
 
 function ENT:GetFuse()
-    return self.Fuse
+    return self.Fuse or 1
+end
+
+function ENT:SetAudioTable( tbl )
+    self.Sounds = tbl
+end
+
+function ENT:GetAudioTable()
+    return self.Sounds or {}
 end

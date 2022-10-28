@@ -40,14 +40,4 @@ if SERVER then
         return true
     end)
 
-    hook.Add( "EntityTakeDamage", "tds_ZombieEscapeDamageMult", function( target, dmg )
-        local dmgTrigger = {
-            ["func_breakable"] = true
-        }
-    
-        if dmgTrigger[target:GetClass()] then
-            dmg:SetDamage( dmg:GetDamage() * SET["TriggerDamageMult"] )
-        end
-    end )
-
 end

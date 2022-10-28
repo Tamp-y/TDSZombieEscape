@@ -21,6 +21,10 @@ TDS_ClientConVar( "tds_hud_ze_target_xadd", 0, true ) --x pos add
 TDS_ClientConVar( "tds_hud_ze_target_yadd", 0, true ) --y pos add
 TDS_ClientConVar( "tds_hud_ze_target_width", 300, true ) --bar width
 TDS_ClientConVar( "tds_hud_ze_target_height", 10, true ) --bar height
+--player target
+TDS_ClientConVar( "tds_hud_ze_playertarget", 1, true ) --enable
+TDS_ClientConVar( "tds_hud_ze_playertarget_xadd", 0, true ) --x pos add
+TDS_ClientConVar( "tds_hud_ze_playertarget_yadd", 0, true ) --y pos add
 --timer
 TDS_ClientConVar( "tds_hud_ze_timer", 1, true ) --enable
 TDS_ClientConVar( "tds_hud_ze_timer_xadd", 0, true ) --x pos add
@@ -37,8 +41,6 @@ HUDCOL_TERTIARY = HUDCOL_TERTIARY or Color( 100, 100, 100, 100 )
 HUDCOL_GOOD = HUDCOL_GOOD or Color( 150, 75, 50, 255 )
 HUDCOL_BAD = HUDCOL_BAD or Color( 150, 20, 20, 255 )
 ]]
-
-local ply = LocalPlayer()
 
 -- ███████╗██╗   ██╗███╗   ██╗ ██████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
 -- ██╔════╝██║   ██║████╗  ██║██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
@@ -81,14 +83,29 @@ function ShouldDrawHealth()
 end
 
 function ShouldDrawTarget()
+    local HUD_TARGET = GetConVar("tds_hud_ze_target"):GetInt()
+
     if FD() then return true end
+    if not tobool( HUD_TARGET ) then return false end
     if not HasActiveTarget() then return false end
     if not LocalPlayer():Alive() then return false end
     return true
 end
 
-function ShouldDrawTimer()
+function ShouldDrawPlayerTarget()
+    local HUD_TARGET = GetConVar("tds_hud_ze_playertarget"):GetInt()
+
     if FD() then return true end
+    if not tobool( HUD_TARGET ) then return false end
+    if not LocalPlayer():Alive() then return false end
+    return true
+end
+
+function ShouldDrawTimer()
+    local HUD_TIMER = GetConVar("tds_hud_ze_timer"):GetInt()
+
+    if FD() then return true end
+    if not tobool( HUD_TIMER ) then return false end
     if not LocalPlayer():Alive() then return false end
     return true
 end
@@ -113,8 +130,6 @@ function GM:HUDPaint()
     CheckScale = CheckScale or nil
     if CheckScale != HUD_SCALE then BuildFonts() end
 
-    local ply = LocalPlayer()
-
     --Health
     if ShouldDrawHealth() then
         local xadd, yadd, cwidth, cheight = GetConVar("tds_hud_ze_health_xadd"):GetInt(), GetConVar("tds_hud_ze_health_yadd"):GetInt(), GetConVar("tds_hud_ze_health_width"):GetInt(), GetConVar("tds_hud_ze_health_height"):GetInt() --Adjustable Settings
@@ -127,9 +142,9 @@ function GM:HUDPaint()
         x, y = x + (40 * HUD_SCALE), y - height
         surface.SetDrawColor( HUDCOL_PRIMARY )
         surface.DrawOutlinedRect( x - 3, y - 3, width + 6, height + 6 ) --Outline
-        surface.DrawRect( x, y, math.Clamp( ply:Health() / ply:GetMaxHealth() * width, 0, width ), height ) --Bar
+        surface.DrawRect( x, y, math.Clamp( LocalPlayer():Health() / LocalPlayer():GetMaxHealth() * width, 0, width ), height ) --Bar
         x, y = x + width + 10, y + (height / 2) - 2
-        draw.SimpleTextOutlined( ply:Health(), "TDSHudNormal", x, y, HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, 1, HUDCOL_BLACK )
+        draw.SimpleTextOutlined( LocalPlayer():Health(), "TDSHudNormal", x, y, HUDCOL_PRIMARY, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, 1, HUDCOL_BLACK )
     end
 
     --Target
@@ -145,6 +160,26 @@ function GM:HUDPaint()
         surface.DrawRect( x, y, math.Clamp( (targethealth / targetmaxhealth) * width, 0, width ), height )
         draw.SimpleTextOutlined( targetname, "TDSHudSmall", xpos, y - (5 * HUD_SCALE), HUDCOL_BAD, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM, 1, HUDCOL_BLACK )
         draw.SimpleTextOutlined( targethealth, "TDSHudSmall", xpos, y + (4 * HUD_SCALE), HUDCOL_BAD, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, HUDCOL_BLACK )
+    end
+
+    --Player Target
+    if ShouldDrawPlayerTarget() then
+        local xadd, yadd = GetConVar("tds_hud_ze_playertarget_xadd"):GetInt(), GetConVar("tds_hud_ze_playertarget_yadd"):GetInt() --Adjustments
+        local xpos, ypos = (ScrW() / 2), (ScrH() * 0.55) --Default
+        local x, y = (xpos + xadd), (ypos + yadd) --Calculations
+        local tr = util.TraceLine({
+            start = LocalPlayer():EyePos(),
+            endpos = LocalPlayer():GetShootPos() + (LocalPlayer():GetAimVector() * 10000),
+            filter = LocalPlayer()
+        })
+        local ent = tr.Entity
+        
+        if FD() or ent and IsValid( ent ) and ent:IsPlayer() then
+            local plytarget, plyhealth = ent:Nick() or "Player Name", ent:Health() or 100
+
+            draw.SimpleTextOutlined( plytarget, "TDSHudSmall", x, y, HUDCOL_PRIMARY, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 1, HUDCOL_BLACK )
+            draw.SimpleTextOutlined( plyhealth, "TDSHudSmall", x, y + (15 * HUD_SCALE), HUDCOL_PRIMARY, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 1, HUDCOL_BLACK )
+        end
     end
 
     --Timer

@@ -119,6 +119,10 @@ function BossMeta:GetCounter()
     return self.counter
 end
 
+function BossMeta:GetMassCounter()
+    return self.masscounter
+end
+
 function BossMeta:GetType()
     return self.type
 end

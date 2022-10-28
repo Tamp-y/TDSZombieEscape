@@ -17,9 +17,10 @@ SWEP.Entity = "ent_hegrenade"
 SWEP.Stats = {}
 STAT = SWEP.Stats
 STAT.Damage = 100
+STAT.Radius = 500
 STAT.PrepareDelay = 1
-STAT.Fuse = 1.5
-STAT.Clip = 1
+STAT.Fuse = 2
+STAT.Clip = 1000
 STAT.Firerate = 60/400
 STAT.ReloadTime = 2.8
 

@@ -1,7 +1,7 @@
 Settings = {}
 SET = Settings
 
-SET["Developer"] = 1 --Enable/Disable Developing Mode, this turns off most game features.
+SET["Developer"] = 0 --Enable/Disable Developing Mode, this turns off most game features.
 
 --Timer/Round
 SET["MapLength"] = 1800 --Time left on a map before map changes (seconds)

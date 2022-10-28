@@ -285,18 +285,20 @@ function SWEP:PrepareUtility()
     self:SetNextPrimaryFire( CurTime() + self:GetPrepareDelay() )
 end
 
-function SWEP:ThrowUtility()
+function SWEP:ThrowUtility( velocityOverride )
     local ply = self.Owner and self.Owner or self:GetOwner()
 
     if SERVER then
         local ent = ents.Create( self.Entity )
+        ent:SetPos( ply:GetShootPos() )
+        ent:SetFuse( CurTime() + self:GetFuse() )
+        ent:Spawn()
         ent:SetOwner( ply )
         ent:SetDamage( self:GetDamage() )
-        ent:SetFuse( CurTime() + self:GetFuse() )
-        ent:SetPos( ply:GetShootPos() )
-        ent:Spawn()
+        ent:SetRadius( self:GetRadius() )
+        ent:SetAudioTable( self.Sounds )
         local physobj = ent:GetPhysicsObject()
-        physobj:SetVelocity( ply:GetVelocity() + (ply:EyeAngles():Forward() * 1500) + Vector( 0, 0, 100 ) )
+        physobj:SetVelocity( ply:GetVelocity() + (ply:EyeAngles():Forward() * 1000) + Vector( 0, 0, 100 ) )
         physobj:Wake()
     end
 
@@ -324,11 +326,16 @@ function SWEP:Deploy()
     local anim = self:GetSilenced() and self:RandomValue( self.Anims.Silencer.Draw ) or self:RandomValue( self.Anims.Draw )
     self:PlaySequence( anim )
 
+    self:SetNextPrimaryFire( CurTime() + self:GetDeployTime() )
+    self:SetNextSecondaryFire( CurTime() + self:GetDeployTime() )
+
     return true
 end
 
 function SWEP:Holster()
     if self:IsReloading() then self:SetNextReload( 0 ) end 
+    if self:IsPreparing() then self:SetPreparedIn( 0 ) end 
+    if self:GetPrepared() then self:SetPrepared( false ) end 
     return true
 end
 
@@ -443,12 +450,20 @@ function SWEP:GetFirerate()
     return self:GetStats().Firerate or 60/60
 end
 
+function SWEP:GetDeployTime()
+    return self:GetStats().DeployTime or 1
+end
+
 function SWEP:GetPrepareDelay()
     return self:GetStats().PrepareDelay or 1
 end
 
 function SWEP:GetFuse()
     return self:GetStats().Fuse or 1
+end
+
+function SWEP:GetRadius()
+    return self:GetStats().Radius or 100
 end
 
 function SWEP:GetImpact()

@@ -1,7 +1,7 @@
 "zombieescape"
 {
 	"base"		"tds"
-	"title"		"Zombie Escape"
+	"title"		"TDS Zombie Escape"
 	"category"	"other"
 	"menusystem"	"0"
 }
