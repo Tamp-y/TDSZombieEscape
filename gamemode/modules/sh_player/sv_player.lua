@@ -1,9 +1,14 @@
 function PlyMeta:BecomeHuman()
     self:StripWeapons()
     self:SetTeam( 3 )
-    self:SetModel( "models/player/urban.mdl" )
-    for k, v in pairs( SET["HWeapons"] ) do --TODO: Replace this with TDSFramework weapons if detected
-        self:Give( v )
+
+    if TDSFRAMEWORK then
+        self:InitiateEquipment()
+    else
+        self:SetModel( "models/player/urban.mdl" )
+        for k, v in pairs( SET["HWeapons"] ) do --TODO: Replace this with TDSFramework weapons if detected
+            self:Give( v )
+        end
     end
 end
 
