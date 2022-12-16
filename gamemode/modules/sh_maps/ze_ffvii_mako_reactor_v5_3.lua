@@ -61,6 +61,6 @@ ZE:AddBoss( "ze_ffvii_mako_reactor_v5_3", {
     name = "Sephiroth",
     ent = "bahamutend1",
     counter = "bahamutend1",
-    healthOverride = 1000,
+    healthOverride = 600,
     healthPerPlayer = 200,
 } )
