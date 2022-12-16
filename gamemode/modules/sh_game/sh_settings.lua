@@ -30,5 +30,5 @@ SET["HWeapons"] = { --Default weapons to spawn with (TDSFramework will override 
     "weapon_he",
 }
 SET["ZWeapons"] = { --Default weapons to spawn with
-    "weapon_knife_z",
+    "weapon_knife",
 }
