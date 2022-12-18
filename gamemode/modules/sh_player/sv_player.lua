@@ -12,6 +12,12 @@ function PlyMeta:BecomeHuman()
     end
 end
 
+hook.Add( "TDSOnEquipmentUpdate", "TDS_UpdateEquipment", function( ply ) 
+    if TDSFRAMEWORK and GAMEMODE:InPreSelection() then
+        ply:InitiateEquipment()
+    end
+end)
+
 function PlyMeta:BecomeZombie()
     self:StripWeapons()
     self:SetTeam( 2 )
