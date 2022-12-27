@@ -18,6 +18,12 @@ hook.Add( "TDSOnEquipmentUpdate", "TDS_UpdateEquipment", function( ply )
     end
 end)
 
+hook.Add( "TDSDataLoaded", "TDS_InitEquipment", function( ply ) 
+    if GAMEMODE:InPreSelection() then
+        ply:InitiateEquipment()
+    end
+end)
+
 function PlyMeta:BecomeZombie()
     self:StripWeapons()
     self:SetTeam( 2 )
