@@ -7,8 +7,6 @@
 
 TDS_ClientConVar( "tds_hud_ze", 1, true ) --enable
 TDS_ClientConVar( "tds_hud_ze_scale", 1, true ) --scale
---HUD_EDGE_WIDTH = TDS_ClientConVar( "tds_hud_ze_wedge", 0, true ) --hud width edge
---HUD_EDGE_HEIGHT = TDS_ClientConVar( "tds_hud_ze_hedge", 0, true ) --hud height edge
 --health
 TDS_ClientConVar( "tds_hud_ze_health", 1, true ) --enable
 TDS_ClientConVar( "tds_hud_ze_health_xadd", 0, true ) --x pos add
