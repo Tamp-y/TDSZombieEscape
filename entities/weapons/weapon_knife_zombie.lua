@@ -2,7 +2,7 @@
 
 SWEP.PrintName = "Knife"
 SWEP.Base = "tds_basewep"
-SWEP.ViewModel = "models/weapons/v_knife_t.mdl"
+SWEP.VM = "models/weapons/v_knife_t.mdl"
 SWEP.ViewModelFOV = 75
 SWEP.WorldModel = "models/weapons/w_knife_t.mdl"
 SWEP.Slot = 2
@@ -10,6 +10,8 @@ SWEP.IgnoreStats = true
 
 SWEP.WeaponType = "melee"
 SWEP.HoldType = "knife"
+
+SWEP.ZItem = true
 
 -- Statistics
 

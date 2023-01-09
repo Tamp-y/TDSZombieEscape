@@ -35,6 +35,7 @@ if SERVER then
     hook.Add( "PlayerCanPickupWeapon", "tds_antiweaponstack", function( ply, wep ) 
         if not wep.Base == "tds_basewep" then return false end --ignore weapons not apart of weapon base
 
+        if ply:Team() == 2 and not wep.ZItem then return false end
         if wep:IsPrimaryWeapon() and ply:HasPrimaryWeapon() then return false end
         if wep:IsSecondaryWeapon() and ply:HasSecondaryWeapon() then return false end
         return true
